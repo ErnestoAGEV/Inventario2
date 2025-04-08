@@ -8,6 +8,7 @@ let usuarioActual = null;
 let productoActual = null;
 let inventarioActual = null;
 let productosCache = [];
+let usuarioEditando = null;
 
 // Elementos del DOM
 const DOM = {
@@ -32,13 +33,29 @@ const DOM = {
   btnAgregarProducto: document.getElementById("btnAgregarProducto"),
   buscarProducto: document.getElementById("buscarProducto"),
   
-  // Modal
+  // Modal Producto
   productoModal: document.getElementById("productoModal"),
   modalTitle: document.getElementById("modalTitle"),
   productoNombre: document.getElementById("productoNombre"),
   productoCantidad: document.getElementById("productoCantidad"),
   btnCancelarModal: document.getElementById("btnCancelarModal"),
-  btnGuardarProducto: document.getElementById("btnGuardarProducto")
+  btnGuardarProducto: document.getElementById("btnGuardarProducto"),
+  
+  // Administración de Usuarios
+  usuariosModal: document.getElementById("usuariosModal"),
+  buscarUsuario: document.getElementById("buscarUsuario"),
+  tablaUsuarios: document.getElementById("tablaUsuarios"),
+  btnCancelarUsuarios: document.getElementById("btnCancelarUsuarios"),
+  btnNuevoUsuario: document.getElementById("btnNuevoUsuario"),
+  
+  // Editar Usuario
+  usuarioEditarModal: document.getElementById("usuarioEditarModal"),
+  usuarioModalTitle: document.getElementById("usuarioModalTitle"),
+  editUsuario: document.getElementById("editUsuario"),
+  editPassword: document.getElementById("editPassword"),
+  editRol: document.getElementById("editRol"),
+  btnCancelarEditarUsuario: document.getElementById("btnCancelarEditarUsuario"),
+  btnGuardarUsuario: document.getElementById("btnGuardarUsuario")
 };
 
 // Event Listeners
@@ -57,6 +74,28 @@ DOM.buscarProducto.addEventListener("input", filtrarProductos);
 DOM.btnAgregarProducto.addEventListener("click", mostrarModalAgregar);
 DOM.btnCancelarModal.addEventListener("click", ocultarModal);
 DOM.btnGuardarProducto.addEventListener("click", guardarProducto);
+
+// Usuarios
+DOM.btnCancelarUsuarios.addEventListener("click", () => {
+  DOM.usuariosModal.classList.add("hidden");
+});
+
+DOM.btnNuevoUsuario.addEventListener("click", () => {
+  usuarioEditando = null;
+  DOM.usuarioModalTitle.textContent = "Nuevo Usuario";
+  DOM.editUsuario.disabled = false;
+  DOM.editUsuario.value = "";
+  DOM.editPassword.value = "";
+  DOM.editRol.value = "empleado";
+  DOM.usuarioEditarModal.classList.remove("hidden");
+});
+
+DOM.btnCancelarEditarUsuario.addEventListener("click", () => {
+  DOM.usuarioEditarModal.classList.add("hidden");
+});
+
+DOM.btnGuardarUsuario.addEventListener("click", guardarUsuario);
+DOM.buscarUsuario.addEventListener("input", filtrarUsuarios);
 
 // Registro
 DOM.btnRegistro.addEventListener("click", async () => {
@@ -129,7 +168,6 @@ async function mostrarInventario(usuario) {
   DOM.inventarioTitle.textContent = `Inventario de ${usuario}`;
   DOM.inventarioSection.classList.remove("hidden");
   
-  // Mostrar solo el botón de agregar si es el inventario propio o si es admin
   DOM.btnAgregarProducto.style.display = 
     (usuario === usuarioActual.nombre || usuarioActual.rol === "administrador") 
     ? "block" : "none";
@@ -175,7 +213,6 @@ function agregarFilaProducto(producto) {
   `;
   DOM.tablaProductos.appendChild(row);
   
-  // Agregar eventos a los botones
   row.querySelector(".editar-btn").addEventListener("click", () => editarProducto(producto));
   row.querySelector(".eliminar-btn").addEventListener("click", () => confirmarEliminarProducto(producto));
 }
@@ -185,45 +222,14 @@ function filtrarProductos() {
   const filas = DOM.tablaProductos.querySelectorAll("tr");
   
   filas.forEach(fila => {
-    if (fila.querySelector("td")) { // Ignora la fila de "no hay productos"
+    if (fila.querySelector("td")) {
       const nombreProducto = fila.querySelector("td").textContent.toLowerCase();
       fila.style.display = nombreProducto.includes(termino) ? "" : "none";
     }
   });
 }
 
-async function mostrarSeleccionUsuario() {
-  const usuariosRef = collection(db, "usuarios");
-  const usuariosSnap = await getDocs(usuariosRef);
-  
-  let usuarios = [];
-  usuariosSnap.forEach(doc => {
-    usuarios.push({id: doc.id, ...doc.data()});
-  });
-  
-  if (usuarios.length === 0) {
-    alert("No hay usuarios registrados");
-    return;
-  }
-  
-  let mensaje = "Selecciona un usuario para ver su inventario:\n";
-  usuarios.forEach((user, index) => {
-    mensaje += `${index + 1}. ${user.id} (${user.rol})\n`;
-  });
-  
-  const seleccion = prompt(mensaje);
-  if (!seleccion) return;
-  
-  const index = parseInt(seleccion) - 1;
-  if (isNaN(index) || index < 0 || index >= usuarios.length) {
-    alert("Selección inválida");
-    return;
-  }
-  
-  await mostrarInventario(usuarios[index].id);
-}
-
-// Funciones para el modal
+// Funciones para el modal de productos
 function mostrarModalAgregar() {
   productoActual = null;
   DOM.modalTitle.textContent = "Agregar Producto";
@@ -263,7 +269,7 @@ function confirmarEliminarProducto(producto) {
   }
 }
 
-// Funciones CRUD
+// Funciones CRUD productos
 async function guardarProducto() {
   const nombre = DOM.productoNombre.value.trim();
   const cantidad = parseInt(DOM.productoCantidad.value, 10);
@@ -275,13 +281,11 @@ async function guardarProducto() {
   
   try {
     if (productoActual) {
-      // Editar producto existente
       await updateDoc(doc(db, "inventarios", inventarioActual, "productos", productoActual.id), {
         nombre,
         cantidad
       });
       
-      // Actualizar caché
       const index = productosCache.findIndex(p => p.id === productoActual.id);
       if (index !== -1) {
         productosCache[index] = { ...productosCache[index], nombre, cantidad };
@@ -289,19 +293,15 @@ async function guardarProducto() {
       
       alert("Producto actualizado correctamente");
     } else {
-      // Agregar nuevo producto
       const docRef = await addDoc(collection(db, "inventarios", inventarioActual, "productos"), {
         nombre,
         cantidad
       });
       
-      // Agregar a caché
       productosCache.push({ id: docRef.id, nombre, cantidad });
-      
       alert("Producto agregado correctamente");
     }
     
-    // Actualizar vista
     DOM.tablaProductos.innerHTML = "";
     if (productosCache.length === 0) {
       const row = document.createElement("tr");
@@ -312,7 +312,7 @@ async function guardarProducto() {
     }
     
     ocultarModal();
-    DOM.buscarProducto.value = ""; // Limpiar búsqueda
+    DOM.buscarProducto.value = "";
   } catch (error) {
     console.error("Error al guardar producto:", error);
     alert("Error al guardar producto");
@@ -323,10 +323,8 @@ async function eliminarProducto(id) {
   try {
     await deleteDoc(doc(db, "inventarios", inventarioActual, "productos", id));
     
-    // Actualizar caché
     productosCache = productosCache.filter(p => p.id !== id);
     
-    // Recargar la tabla
     DOM.tablaProductos.innerHTML = "";
     if (productosCache.length === 0) {
       const row = document.createElement("tr");
@@ -337,15 +335,177 @@ async function eliminarProducto(id) {
     }
     
     alert("Producto eliminado correctamente");
-    DOM.buscarProducto.value = ""; // Limpiar búsqueda
+    DOM.buscarProducto.value = "";
   } catch (error) {
     console.error("Error al eliminar producto:", error);
     alert("Error al eliminar producto");
   }
 }
 
+// Funciones de administración de usuarios
 async function administrarUsuarios() {
-  alert("Funcionalidad de administración de usuarios en desarrollo");
+  if (usuarioActual.rol !== "administrador") {
+    alert("No tienes permisos para acceder a esta función");
+    return;
+  }
+  
+  await cargarUsuarios();
+  DOM.usuariosModal.classList.remove("hidden");
+}
+
+async function cargarUsuarios() {
+  const usuariosRef = collection(db, "usuarios");
+  const snapshot = await getDocs(usuariosRef);
+  
+  DOM.tablaUsuarios.innerHTML = "";
+  
+  if (snapshot.empty) {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td colspan="3" class="py-4 text-center text-gray-500">No hay usuarios registrados</td>`;
+    DOM.tablaUsuarios.appendChild(row);
+    return;
+  }
+  
+  snapshot.forEach(doc => {
+    const usuario = doc.data();
+    const row = document.createElement("tr");
+    row.className = "hover:bg-gray-50";
+    row.innerHTML = `
+      <td class="py-2 px-4 border">${doc.id}</td>
+      <td class="py-2 px-4 border">${usuario.rol.toUpperCase()}</td>
+      <td class="py-2 px-4 border">
+        <button class="editar-usuario-btn bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600" data-id="${doc.id}">
+          Editar
+        </button>
+        <button class="eliminar-usuario-btn bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600" data-id="${doc.id}">
+          Eliminar
+        </button>
+      </td>
+    `;
+    DOM.tablaUsuarios.appendChild(row);
+    
+    row.querySelector(".editar-usuario-btn").addEventListener("click", () => editarUsuario(doc.id, usuario));
+    row.querySelector(".eliminar-usuario-btn").addEventListener("click", () => confirmarEliminarUsuario(doc.id));
+  });
+}
+
+function filtrarUsuarios() {
+  const termino = DOM.buscarUsuario.value.toLowerCase();
+  const filas = DOM.tablaUsuarios.querySelectorAll("tr");
+  
+  filas.forEach(fila => {
+    if (fila.querySelector("td")) {
+      const nombreUsuario = fila.querySelector("td").textContent.toLowerCase();
+      fila.style.display = nombreUsuario.includes(termino) ? "" : "none";
+    }
+  });
+}
+
+function editarUsuario(usuarioId, usuarioData) {
+  usuarioEditando = { id: usuarioId, ...usuarioData };
+  DOM.usuarioModalTitle.textContent = "Editar Usuario";
+  DOM.editUsuario.disabled = true;
+  DOM.editUsuario.value = usuarioId;
+  DOM.editPassword.value = usuarioData.password;
+  DOM.editRol.value = usuarioData.rol;
+  DOM.usuarioEditarModal.classList.remove("hidden");
+}
+
+function confirmarEliminarUsuario(usuarioId) {
+  if (usuarioId === usuarioActual.nombre) {
+    alert("No puedes eliminar tu propio usuario mientras estás conectado");
+    return;
+  }
+  
+  if (confirm(`¿Estás seguro de eliminar el usuario "${usuarioId}"? Esta acción no se puede deshacer.`)) {
+    eliminarUsuario(usuarioId);
+  }
+}
+
+async function eliminarUsuario(usuarioId) {
+  try {
+    await deleteDoc(doc(db, "usuarios", usuarioId));
+    
+    const inventarioRef = doc(db, "inventarios", usuarioId);
+    const inventarioSnap = await getDoc(inventarioRef);
+    if (inventarioSnap.exists()) {
+      await deleteDoc(inventarioRef);
+    }
+    
+    await cargarUsuarios();
+    alert("Usuario eliminado correctamente");
+  } catch (error) {
+    console.error("Error al eliminar usuario:", error);
+    alert("Error al eliminar usuario");
+  }
+}
+
+async function guardarUsuario() {
+  const usuario = DOM.editUsuario.value.trim();
+  const password = DOM.editPassword.value.trim();
+  const rol = DOM.editRol.value;
+  
+  if (!usuario || !password) {
+    alert("Completa todos los campos");
+    return;
+  }
+  
+  try {
+    if (usuarioEditando) {
+      await updateDoc(doc(db, "usuarios", usuarioEditando.id), {
+        password,
+        rol
+      });
+      alert("Usuario actualizado correctamente");
+    } else {
+      const userRef = doc(db, "usuarios", usuario);
+      const existing = await getDoc(userRef);
+      if (existing.exists()) {
+        alert("Ese usuario ya existe");
+        return;
+      }
+      
+      await setDoc(userRef, { password, rol });
+      alert("Usuario creado correctamente");
+    }
+    
+    DOM.usuarioEditarModal.classList.add("hidden");
+    await cargarUsuarios();
+  } catch (error) {
+    console.error("Error al guardar usuario:", error);
+    alert("Error al guardar usuario");
+  }
+}
+
+async function mostrarSeleccionUsuario() {
+  const usuariosRef = collection(db, "usuarios");
+  const usuariosSnap = await getDocs(usuariosRef);
+  
+  let usuarios = [];
+  usuariosSnap.forEach(doc => {
+    usuarios.push({id: doc.id, ...doc.data()});
+  });
+  
+  if (usuarios.length === 0) {
+    alert("No hay usuarios registrados");
+    return;
+  }
+  
+  let mensaje = "Selecciona un usuario para ver su inventario:\n";
+  usuarios.forEach((user, index) => {
+    mensaje += `${index + 1}. ${user.id} (${user.rol})\n`;
+  });
+  
+  const seleccion = prompt(mensaje);
+  if (!seleccion) return;
+  
+  const index = parseInt(seleccion) - 1;
+  if (isNaN(index) || index < 0 || index >= usuarios.length) {
+    alert("Selección inválida");
+    return;
+  }
+  
+  await mostrarInventario(usuarios[index].id);
 }
 
 function cerrarSesion() {
@@ -357,7 +517,6 @@ function cerrarSesion() {
   DOM.loginSection.classList.remove("hidden");
   DOM.buscarProducto.value = "";
   
-  // Limpiar campos de login
   document.getElementById("usuario").value = "";
   document.getElementById("password").value = "";
 }
