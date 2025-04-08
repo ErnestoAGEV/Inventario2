@@ -141,15 +141,12 @@ function mostrarMenu() {
 
   DOM.acciones.innerHTML = "";
 
-  if (usuarioActual.rol === "empleado") {
-    agregarBoton("Ver mi inventario", () => mostrarInventario(usuarioActual.nombre));
-  }
+  // Todos los usuarios pueden ver su inventario
+  agregarBoton("Ver mi inventario", () => mostrarInventario(usuarioActual.nombre));
 
-  if (usuarioActual.rol === "supervisor" || usuarioActual.rol === "administrador") {
-    agregarBoton("Ver todos los inventarios", mostrarSeleccionUsuario);
-  }
-
+  // Solo administradores pueden ver estas opciones
   if (usuarioActual.rol === "administrador") {
+    agregarBoton("Ver todos los inventarios", mostrarSeleccionUsuario);
     agregarBoton("Administrar usuarios", administrarUsuarios);
   }
 }
@@ -168,6 +165,7 @@ async function mostrarInventario(usuario) {
   DOM.inventarioTitle.textContent = `Inventario de ${usuario}`;
   DOM.inventarioSection.classList.remove("hidden");
   
+  // Mostrar botón de agregar solo si es el propio usuario o administrador
   DOM.btnAgregarProducto.style.display = 
     (usuario === usuarioActual.nombre || usuarioActual.rol === "administrador") 
     ? "block" : "none";
@@ -447,6 +445,12 @@ async function guardarUsuario() {
   
   if (!usuario || !password) {
     alert("Completa todos los campos");
+    return;
+  }
+  
+  // Validar que solo administradores puedan crear otros administradores
+  if (rol === "administrador" && usuarioActual.rol !== "administrador") {
+    alert("Solo los administradores pueden crear otros administradores");
     return;
   }
   
