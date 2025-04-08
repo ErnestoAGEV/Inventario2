@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Inventarios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Sección Login -->
+        <div id="login" class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-6 text-center">Iniciar Sesión</h2>
+            <div class="mb-4">
+                <label class="block text-gray-700 mb-2">Usuario</label>
+                <input id="usuario" type="text" class="w-full px-3 py-2 border rounded">
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-700 mb-2">Contraseña</label>
+                <input id="password" type="password" class="w-full px-3 py-2 border rounded">
+            </div>
+            <button id="btnLogin" class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+                Ingresar
+            </button>
+            <p class="text-center mt-4">
+                ¿No tienes cuenta? <button id="toggleRegistro" class="text-blue-600 hover:underline">Regístrate</button>
+            </p>
+        </div>
+
+        <!-- Sección Registro -->
+        <div id="registro" class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md hidden">
+            <h2 class="text-2xl font-bold mb-6 text-center">Registro</h2>
+            <div class="mb-4">
+                <label class="block text-gray-700 mb-2">Usuario</label>
+                <input id="regUsuario" type="text" class="w-full px-3 py-2 border rounded">
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-700 mb-2">Contraseña</label>
+                <input id="regPassword" type="password" class="w-full px-3 py-2 border rounded">
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-700 mb-2">Rol</label>
+                <select id="regRol" class="w-full px-3 py-2 border rounded">
+                    <option value="empleado">Empleado</option>
+                    <option value="supervisor">Supervisor</option>
+                    <option value="administrador">Administrador</option>
+                </select>
+            </div>
+            <button id="btnRegistro" class="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">
+                Registrar
+            </button>
+            <p class="text-center mt-4">
+                ¿Ya tienes cuenta? <button id="toggleLogin" class="text-blue-600 hover:underline">Inicia sesión</button>
+            </p>
+        </div>
+
+        <!-- Menú Principal -->
+        <div id="menu" class="hidden">
+            <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                <h1 id="bienvenida" class="text-2xl font-bold mb-4"></h1>
+                <div id="acciones" class="flex flex-wrap gap-4 mb-6"></div>
+                <button id="btnLogout" class="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700">
+                    Cerrar sesión
+                </button>
+            </div>
+
+            <!-- Sección de Inventario -->
+            <div id="inventarioSection" class="hidden bg-white p-6 rounded-lg shadow-md">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold" id="inventarioTitle"></h2>
+                    <div class="flex gap-4">
+                        <div class="relative">
+                            <input type="text" id="buscarProducto" placeholder="Buscar producto..." 
+                                   class="py-1 px-3 pr-8 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300">
+                            <div class="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <button id="btnAgregarProducto" class="bg-green-600 text-white py-1 px-3 rounded hover:bg-green-700">
+                            + Agregar Producto
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="py-2 px-4 border">Producto</th>
+                                <th class="py-2 px-4 border">Cantidad</th>
+                                <th class="py-2 px-4 border">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaProductos">
+                            <!-- Productos se cargarán aquí -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar/editar producto -->
+    <div id="productoModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4" id="modalTitle">Agregar Producto</h3>
+            <div class="mb-4">
+                <label class="block text-gray-700 mb-2">Nombre del Producto</label>
+                <input id="productoNombre" type="text" class="w-full px-3 py-2 border rounded">
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-700 mb-2">Cantidad</label>
+                <input id="productoCantidad" type="number" class="w-full px-3 py-2 border rounded">
+            </div>
+            <div class="flex justify-end gap-4">
+                <button id="btnCancelarModal" class="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600">
+                    Cancelar
+                </button>
+                <button id="btnGuardarProducto" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para administrar usuarios -->
+<div id="usuariosModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl">
+        <h3 class="text-xl font-bold mb-4">Administración de Usuarios</h3>
+        <div class="mb-4">
+            <input type="text" id="buscarUsuario" placeholder="Buscar usuario..." 
+                   class="w-full px-3 py-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-300">
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="py-2 px-4 border">Usuario</th>
+                            <th class="py-2 px-4 border">Rol</th>
+                            <th class="py-2 px-4 border">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaUsuarios">
+                        <!-- Usuarios se cargarán aquí -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="flex justify-end gap-4">
+            <button id="btnCancelarUsuarios" class="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600">
+                Cerrar
+            </button>
+            <button id="btnNuevoUsuario" class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">
+                + Nuevo Usuario
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para editar/crear usuario -->
+<div id="usuarioEditarModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h3 class="text-xl font-bold mb-4" id="usuarioModalTitle">Editar Usuario</h3>
+        <div class="mb-4">
+            <label class="block text-gray-700 mb-2">Usuario</label>
+            <input id="editUsuario" type="text" class="w-full px-3 py-2 border rounded" disabled>
+        </div>
+        <div class="mb-4">
+            <label class="block text-gray-700 mb-2">Contraseña</label>
+            <input id="editPassword" type="password" class="w-full px-3 py-2 border rounded">
+        </div>
+        <div class="mb-6">
+            <label class="block text-gray-700 mb-2">Rol</label>
+            <select id="editRol" class="w-full px-3 py-2 border rounded">
+                <option value="empleado">Empleado</option>
+                <option value="supervisor">Supervisor</option>
+                <option value="administrador">Administrador</option>
+            </select>
+        </div>
+        <div class="flex justify-end gap-4">
+            <button id="btnCancelarEditarUsuario" class="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600">
+                Cancelar
+            </button>
+            <button id="btnGuardarUsuario" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+                Guardar
+            </button>
+        </div>
+    </div>
+</div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
