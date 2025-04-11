@@ -161,6 +161,14 @@ function agregarBoton(texto, accion) {
 
 // Funciones de inventario
 async function mostrarInventario(usuario) {
+  // Verificar si el usuario a ver es administrador
+  const userDoc = await getDoc(doc(db, "usuarios", usuario));
+  
+  if (userDoc.exists() && userDoc.data().rol === "administrador" && usuario !== usuarioActual.nombre) {
+    alert("No puedes acceder al inventario de otro administrador");
+    return;
+  }
+  
   inventarioActual = usuario;
   DOM.inventarioTitle.textContent = `Inventario de ${usuario}`;
   DOM.inventarioSection.classList.remove("hidden");
@@ -368,6 +376,12 @@ async function cargarUsuarios() {
     const usuario = doc.data();
     const row = document.createElement("tr");
     row.className = "hover:bg-gray-50";
+    
+    // Marcar fila de administradores con un fondo diferente
+    if (usuario.rol === "administrador") {
+      row.className += " bg-blue-50";
+    }
+    
     row.innerHTML = `
       <td class="py-2 px-4 border">${doc.id}</td>
       <td class="py-2 px-4 border">${usuario.rol.toUpperCase()}</td>
@@ -375,15 +389,25 @@ async function cargarUsuarios() {
         <button class="editar-usuario-btn bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600" data-id="${doc.id}">
           Editar
         </button>
-        <button class="eliminar-usuario-btn bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600" data-id="${doc.id}">
+        <button class="eliminar-usuario-btn bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600" data-id="${doc.id}"
+          ${usuario.rol === "administrador" ? "disabled" : ""}>
           Eliminar
         </button>
       </td>
     `;
     DOM.tablaUsuarios.appendChild(row);
     
-    row.querySelector(".editar-usuario-btn").addEventListener("click", () => editarUsuario(doc.id, usuario));
-    row.querySelector(".eliminar-usuario-btn").addEventListener("click", () => confirmarEliminarUsuario(doc.id));
+    // Solo permitir editar si no es administrador o es el propio usuario
+    if (usuario.rol !== "administrador" || doc.id === usuarioActual.nombre) {
+      row.querySelector(".editar-usuario-btn").addEventListener("click", () => editarUsuario(doc.id, usuario));
+    } else {
+      row.querySelector(".editar-usuario-btn").disabled = true;
+    }
+    
+    // Configurar evento de eliminación solo si no es administrador
+    if (usuario.rol !== "administrador") {
+      row.querySelector(".eliminar-usuario-btn").addEventListener("click", () => confirmarEliminarUsuario(doc.id));
+    }
   });
 }
 
@@ -410,14 +434,28 @@ function editarUsuario(usuarioId, usuarioData) {
 }
 
 function confirmarEliminarUsuario(usuarioId) {
+  // No permitir eliminar el propio usuario
   if (usuarioId === usuarioActual.nombre) {
     alert("No puedes eliminar tu propio usuario mientras estás conectado");
     return;
   }
   
-  if (confirm(`¿Estás seguro de eliminar el usuario "${usuarioId}"? Esta acción no se puede deshacer.`)) {
-    eliminarUsuario(usuarioId);
-  }
+  // Obtener datos del usuario a eliminar
+  getDoc(doc(db, "usuarios", usuarioId)).then((docSnap) => {
+    if (docSnap.exists()) {
+      const usuario = docSnap.data();
+      
+      // No permitir eliminar administradores
+      if (usuario.rol === "administrador") {
+        alert("No puedes eliminar a otros administradores");
+        return;
+      }
+      
+      if (confirm(`¿Estás seguro de eliminar el usuario "${usuarioId}"? Esta acción no se puede deshacer.`)) {
+        eliminarUsuario(usuarioId);
+      }
+    }
+  });
 }
 
 async function eliminarUsuario(usuarioId) {
@@ -487,11 +525,14 @@ async function mostrarSeleccionUsuario() {
   
   let usuarios = [];
   usuariosSnap.forEach(doc => {
-    usuarios.push({id: doc.id, ...doc.data()});
+    // Solo incluir usuarios que no sean administradores
+    if (doc.data().rol !== "administrador") {
+      usuarios.push({id: doc.id, ...doc.data()});
+    }
   });
   
   if (usuarios.length === 0) {
-    alert("No hay usuarios registrados");
+    alert("No hay usuarios disponibles para ver sus inventarios");
     return;
   }
   
