@@ -376,12 +376,6 @@ async function cargarUsuarios() {
     const usuario = doc.data();
     const row = document.createElement("tr");
     row.className = "hover:bg-gray-50";
-    
-    // Marcar fila de administradores con un fondo diferente
-    if (usuario.rol === "administrador") {
-      row.className += " bg-blue-50";
-    }
-    
     row.innerHTML = `
       <td class="py-2 px-4 border">${doc.id}</td>
       <td class="py-2 px-4 border">${usuario.rol.toUpperCase()}</td>
@@ -389,25 +383,15 @@ async function cargarUsuarios() {
         <button class="editar-usuario-btn bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600" data-id="${doc.id}">
           Editar
         </button>
-        <button class="eliminar-usuario-btn bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600" data-id="${doc.id}"
-          ${usuario.rol === "administrador" ? "disabled" : ""}>
+        <button class="eliminar-usuario-btn bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600" data-id="${doc.id}">
           Eliminar
         </button>
       </td>
     `;
     DOM.tablaUsuarios.appendChild(row);
     
-    // Solo permitir editar si no es administrador o es el propio usuario
-    if (usuario.rol !== "administrador" || doc.id === usuarioActual.nombre) {
-      row.querySelector(".editar-usuario-btn").addEventListener("click", () => editarUsuario(doc.id, usuario));
-    } else {
-      row.querySelector(".editar-usuario-btn").disabled = true;
-    }
-    
-    // Configurar evento de eliminación solo si no es administrador
-    if (usuario.rol !== "administrador") {
-      row.querySelector(".eliminar-usuario-btn").addEventListener("click", () => confirmarEliminarUsuario(doc.id));
-    }
+    row.querySelector(".editar-usuario-btn").addEventListener("click", () => editarUsuario(doc.id, usuario));
+    row.querySelector(".eliminar-usuario-btn").addEventListener("click", () => confirmarEliminarUsuario(doc.id));
   });
 }
 
