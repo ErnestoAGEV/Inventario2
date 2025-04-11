@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario Personal - Solución Digital para tu Negocio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .hero {
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://www.shutterstock.com/image-photo/banner-warehouse-background-storage-inventory-260nw-2539894429.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body class="font-sans">
+    <!-- Barra de navegación -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex justify-between">
+                <div class="flex space-x-7">
+                    <div>
+                        <a href="#" class="flex items-center py-4 px-2">
+                            <i class="fas fa-boxes text-blue-600 text-2xl mr-2"></i>
+                            <span class="font-semibold text-gray-900 text-lg">InventarioPro</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-3">
+                    <a href="#features" class="py-4 px-2 text-gray-500 hover:text-blue-600">Características</a>
+                    <a href="#benefits" class="py-4 px-2 text-gray-500 hover:text-blue-600">Beneficios</a>
+                    <a href="#testimonials" class="py-4 px-2 text-gray-500 hover:text-blue-600">Testimonios</a>
+                    <a href="index.html" class="py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300">
+                        Iniciar Sesión
+                    </a>
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button class="outline-none mobile-menu-button">
+                        <i class="fas fa-bars text-gray-500 text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero text-white py-20">
+        <div class="container mx-auto px-6 text-center">
+            <h1 class="text-4xl font-bold mb-6 md:text-5xl">Controla tu inventario de manera inteligente</h1>
+            <p class="text-xl mb-8 max-w-2xl mx-auto">La solución digital perfecta para gestionar tus productos, optimizar tus recursos y hacer crecer tu negocio.</p>
+            <div class="flex flex-col space-y-4 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
+                <a href="index.html" class="px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition duration-300">
+                    Iniciar Sesión
+                </a>
+                <a href="#features" class="px-8 py-3 bg-white text-blue-600 rounded-lg font-medium hover:bg-gray-100 transition duration-300">
+                    Conoce más
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Características principales -->
+    <section id="features" class="py-16 bg-gray-50">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold text-center mb-12">Características Principales</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Característica 1 -->
+                <div class="feature-card bg-white p-8 rounded-lg shadow-md transition duration-500">
+                    <div class="text-blue-600 mb-4">
+                        <i class="fas fa-box-open text-4xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Gestión de Productos</h3>
+                    <p class="text-gray-600">Registra, actualiza y organiza todos tus productos en un solo lugar con nuestro sistema intuitivo.</p>
+                </div>
+                
+                <!-- Característica 2 -->
+                <div class="feature-card bg-white p-8 rounded-lg shadow-md transition duration-500">
+                    <div class="text-blue-600 mb-4">
+                        <i class="fas fa-chart-line text-4xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Seguimiento en Tiempo Real</h3>
+                    <p class="text-gray-600">Monitorea el movimiento de tu inventario con actualizaciones en tiempo real y reportes automáticos.</p>
+                </div>
+                
+                <!-- Característica 3 -->
+                <div class="feature-card bg-white p-8 rounded-lg shadow-md transition duration-500">
+                    <div class="text-blue-600 mb-4">
+                        <i class="fas fa-users-cog text-4xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Control de Accesos</h3>
+                    <p class="text-gray-600">Asigna roles y permisos para que cada miembro de tu equipo tenga acceso a lo que necesite.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Beneficios -->
+    <section id="benefits" class="py-16 bg-white">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold text-center mb-12">Beneficios de Usar Nuestro Sistema</h2>
+            
+            <div class="flex flex-col md:flex-row items-center mb-12">
+                <div class="md:w-1/2 mb-8 md:mb-0 md:pr-8">
+                    <img src="https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=695&q=80" 
+                         alt="Ahorro de tiempo" class="rounded-lg shadow-lg w-full">
+                </div>
+                <div class="md:w-1/2">
+                    <h3 class="text-2xl font-semibold mb-4">Ahorra Tiempo y Reduce Errores</h3>
+                    <p class="text-gray-600 mb-4">Olvídate de los inventarios manuales y las hojas de cálculo interminables. Nuestro sistema automatiza el proceso, reduciendo errores humanos y ahorrándote horas de trabajo.</p>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                            <span>Registro instantáneo de productos</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                            <span>Alertas de stock bajo automáticas</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                            <span>Historial completo de movimientos</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="flex flex-col md:flex-row-reverse items-center">
+                <div class="md:w-1/2 mb-8 md:mb-0 md:pl-8">
+                    <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" 
+                         alt="Toma mejores decisiones" class="rounded-lg shadow-lg w-full">
+                </div>
+                <div class="md:w-1/2">
+                    <h3 class="text-2xl font-semibold mb-4">Toma Decisiones Informadas</h3>
+                    <p class="text-gray-600 mb-4">Con datos precisos y actualizados en tiempo real, podrás tomar mejores decisiones para tu negocio y anticiparte a las necesidades de inventario.</p>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                            <span>Reportes detallados de inventario</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                            <span>Análisis de productos más vendidos</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                            <span>Proyecciones de demanda basadas en historial</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonios -->
+    <section id="testimonials" class="py-16 bg-gray-50">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold text-center mb-12">Lo que dicen nuestros usuarios</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Testimonio 1 -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mr-4">
+                            <i class="fas fa-user text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">María González</h4>
+                            <p class="text-gray-500 text-sm">Tienda de Abarrotes</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600">"Desde que implementé este sistema, he reducido mis pérdidas por caducidad en un 40%. La facilidad para ver qué productos necesito reponer ha sido invaluable."</p>
+                    <div class="mt-4 text-yellow-400">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+                
+                <!-- Testimonio 2 -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mr-4">
+                            <i class="fas fa-user text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Carlos Mendoza</h4>
+                            <p class="text-gray-500 text-sm">Ferretería</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600">"El control de acceso por roles me permite que mis empleados solo vean lo necesario. Ahora puedo enfocarme en crecer el negocio en lugar de estar revisando inventarios."</p>
+                    <div class="mt-4 text-yellow-400">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                    </div>
+                </div>
+                
+                <!-- Testimonio 3 -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mr-4">
+                            <i class="fas fa-user text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Laura Jiménez</h4>
+                            <p class="text-gray-500 text-sm">Pequeña Empresaria</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600">"La posibilidad de acceder desde cualquier dispositivo ha sido un cambio radical para mi negocio. Ahora gestiono mi inventario incluso cuando viajo."</p>
+                    <div class="mt-4 text-yellow-400">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-16 bg-blue-600 text-white">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-3xl font-bold mb-6">¿Listo para transformar tu gestión de inventario?</h2>
+            <p class="text-xl mb-8 max-w-2xl mx-auto">Regístrate ahora y comienza a disfrutar de los beneficios de un sistema profesional de inventario.</p>
+            <div class="flex flex-col space-y-4 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
+                <a href="index.html" class="px-8 py-3 bg-white text-blue-600 rounded-lg font-medium hover:bg-gray-100 transition duration-300">
+                    Iniciar Sesión
+                </a>
+                <a href="index.html#registro" class="px-8 py-3 border-2 border-white text-white rounded-lg font-medium hover:bg-blue-700 transition duration-300">
+                    Crear Cuenta
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-8">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <a href="#" class="flex items-center">
+                        <i class="fas fa-boxes text-blue-400 text-2xl mr-2"></i>
+                        <span class="font-semibold text-xl">InventarioPro</span>
+                    </a>
+                    <p class="mt-2 text-gray-400 text-sm">La solución perfecta para tu gestión de inventario</p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-400 text-sm mb-4 md:mb-0">© 2023 InventarioPro. Todos los derechos reservados.</p>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-white text-sm">Términos de Servicio</a>
+                    <a href="#" class="text-gray-400 hover:text-white text-sm">Política de Privacidad</a>
+                    <a href="#" class="text-gray-400 hover:text-white text-sm">Contacto</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Simple script para el menú móvil (puedes expandirlo según necesites)
+        document.querySelector('.mobile-menu-button').addEventListener('click', function() {
+            // Aquí puedes agregar la lógica para mostrar/ocultar el menú móvil
+            alert('Menú móvil - Implementa la funcionalidad según tus necesidades');
+        });
+    </script>
+</body>
+</html>
