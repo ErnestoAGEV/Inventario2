@@ -1,8 +1,11 @@
+// app.js
 import { db } from "./firebase-config.js";
 import {
   collection, doc, getDoc, getDocs, setDoc,
   addDoc, updateDoc, deleteDoc, query, where
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const { jsPDF } = window.jspdf;
 
 let usuarioActual = null;
 let productoActual = null;
@@ -32,6 +35,7 @@ const DOM = {
   tablaProductos: document.getElementById("tablaProductos"),
   btnAgregarProducto: document.getElementById("btnAgregarProducto"),
   buscarProducto: document.getElementById("buscarProducto"),
+  btnGenerarReporte: document.getElementById("btnGenerarReporte"),
   
   // Modal Producto
   productoModal: document.getElementById("productoModal"),
@@ -55,7 +59,13 @@ const DOM = {
   editPassword: document.getElementById("editPassword"),
   editRol: document.getElementById("editRol"),
   btnCancelarEditarUsuario: document.getElementById("btnCancelarEditarUsuario"),
-  btnGuardarUsuario: document.getElementById("btnGuardarUsuario")
+  btnGuardarUsuario: document.getElementById("btnGuardarUsuario"),
+  
+  // Reportes
+  reporteModal: document.getElementById("reporteModal"),
+  tipoReporte: document.getElementById("tipoReporte"),
+  btnCancelarReporte: document.getElementById("btnCancelarReporte"),
+  btnDescargarReporte: document.getElementById("btnDescargarReporte")
 };
 
 // Event Listeners
@@ -74,6 +84,8 @@ DOM.buscarProducto.addEventListener("input", filtrarProductos);
 DOM.btnAgregarProducto.addEventListener("click", mostrarModalAgregar);
 DOM.btnCancelarModal.addEventListener("click", ocultarModal);
 DOM.btnGuardarProducto.addEventListener("click", guardarProducto);
+DOM.btnGenerarReporte.addEventListener("click", () => DOM.reporteModal.classList.remove("hidden"));
+DOM.btnCancelarReporte.addEventListener("click", () => DOM.reporteModal.classList.add("hidden"));
 
 // Usuarios
 DOM.btnCancelarUsuarios.addEventListener("click", () => {
@@ -161,9 +173,9 @@ function agregarBoton(texto, accion) {
 
 // Funciones de inventario
 async function mostrarInventario(usuario) {
-  // Verificar si el usuario a ver es administrador
   const userDoc = await getDoc(doc(db, "usuarios", usuario));
   
+  // Bloquear acceso a inventarios de otros administradores
   if (userDoc.exists() && userDoc.data().rol === "administrador" && usuario !== usuarioActual.nombre) {
     alert("No puedes acceder al inventario de otro administrador");
     return;
@@ -173,10 +185,13 @@ async function mostrarInventario(usuario) {
   DOM.inventarioTitle.textContent = `Inventario de ${usuario}`;
   DOM.inventarioSection.classList.remove("hidden");
   
-  // Mostrar botón de agregar solo si es el propio usuario o administrador
+  // Mostrar botón de agregar solo si es el propio usuario o administrador viendo un no-admin
+  const esAdminActual = usuarioActual.rol === "administrador";
+  const esMismoUsuario = usuario === usuarioActual.nombre;
+  const esUsuarioNoAdmin = userDoc.exists() && userDoc.data().rol !== "administrador";
+  
   DOM.btnAgregarProducto.style.display = 
-    (usuario === usuarioActual.nombre || usuarioActual.rol === "administrador") 
-    ? "block" : "none";
+    (esMismoUsuario || (esAdminActual && esUsuarioNoAdmin)) ? "block" : "none";
   
   await cargarProductos(usuario);
 }
@@ -257,22 +272,40 @@ function ocultarModal() {
 }
 
 function editarProducto(producto) {
+  // Verificar permisos básicos
   if (usuarioActual.rol !== "administrador" && usuarioActual.nombre !== inventarioActual) {
     alert("No tienes permisos para editar este producto");
     return;
   }
-  mostrarModalEditar(producto);
+  
+  // Verificar adicionalmente si es inventario de otro admin
+  getDoc(doc(db, "usuarios", inventarioActual)).then((docSnap) => {
+    if (docSnap.exists() && docSnap.data().rol === "administrador" && inventarioActual !== usuarioActual.nombre) {
+      alert("No puedes editar productos de otro administrador");
+      return;
+    }
+    mostrarModalEditar(producto);
+  });
 }
 
 function confirmarEliminarProducto(producto) {
+  // Verificar permisos básicos
   if (usuarioActual.rol !== "administrador" && usuarioActual.nombre !== inventarioActual) {
     alert("No tienes permisos para eliminar este producto");
     return;
   }
   
-  if (confirm(`¿Estás seguro de eliminar el producto "${producto.nombre}"?`)) {
-    eliminarProducto(producto.id);
-  }
+  // Verificar adicionalmente si es inventario de otro admin
+  getDoc(doc(db, "usuarios", inventarioActual)).then((docSnap) => {
+    if (docSnap.exists() && docSnap.data().rol === "administrador" && inventarioActual !== usuarioActual.nombre) {
+      alert("No puedes eliminar productos de otro administrador");
+      return;
+    }
+    
+    if (confirm(`¿Estás seguro de eliminar el producto "${producto.nombre}"?`)) {
+      eliminarProducto(producto.id);
+    }
+  });
 }
 
 // Funciones CRUD productos
@@ -309,14 +342,7 @@ async function guardarProducto() {
     }
     
     DOM.tablaProductos.innerHTML = "";
-    if (productosCache.length === 0) {
-      const row = document.createElement("tr");
-      row.innerHTML = `<td colspan="3" class="py-4 text-center text-gray-500">No hay productos en este inventario</td>`;
-      DOM.tablaProductos.appendChild(row);
-    } else {
-      productosCache.forEach(agregarFilaProducto);
-    }
-    
+    productosCache.forEach(agregarFilaProducto);
     ocultarModal();
     DOM.buscarProducto.value = "";
   } catch (error) {
@@ -408,6 +434,12 @@ function filtrarUsuarios() {
 }
 
 function editarUsuario(usuarioId, usuarioData) {
+  // No permitir editar otros administradores
+  if (usuarioData.rol === "administrador" && usuarioId !== usuarioActual.nombre) {
+    alert("No puedes editar a otro administrador");
+    return;
+  }
+  
   usuarioEditando = { id: usuarioId, ...usuarioData };
   DOM.usuarioModalTitle.textContent = "Editar Usuario";
   DOM.editUsuario.disabled = true;
@@ -476,6 +508,15 @@ async function guardarUsuario() {
     return;
   }
   
+  // Si está editando un usuario existente que es admin
+  if (usuarioEditando) {
+    const userDoc = await getDoc(doc(db, "usuarios", usuarioEditando.id));
+    if (userDoc.exists() && userDoc.data().rol === "administrador" && usuarioEditando.id !== usuarioActual.nombre) {
+      alert("No puedes editar a otro administrador");
+      return;
+    }
+  }
+  
   try {
     if (usuarioEditando) {
       await updateDoc(doc(db, "usuarios", usuarioEditando.id), {
@@ -536,6 +577,102 @@ async function mostrarSeleccionUsuario() {
   
   await mostrarInventario(usuarios[index].id);
 }
+
+DOM.btnDescargarReporte.addEventListener("click", async () => {
+  const tipoReporte = DOM.tipoReporte.value;
+  let titulo = "";
+  let productosFiltrados = [];
+  
+  // Filtrar productos según el tipo de reporte
+  switch(tipoReporte) {
+      case "inventario_completo":
+          titulo = `Inventario completo de ${inventarioActual}`;
+          productosFiltrados = [...productosCache];
+          break;
+          
+      case "productos_bajo_stock":
+          titulo = `Productos con stock bajo (${inventarioActual})`;
+          productosFiltrados = productosCache.filter(p => p.cantidad < 10); // Cambia 10 por tu límite
+          break;
+          
+      case "movimientos_recientes":
+          titulo = `Movimientos recientes (${inventarioActual})`;
+          // Aquí necesitarías tener un historial de movimientos en tu base de datos
+          alert("Funcionalidad de movimientos no implementada aún");
+          DOM.reporteModal.classList.add("hidden");
+          return;
+  }
+  
+  if (productosFiltrados.length === 0) {
+      alert("No hay datos para generar el reporte");
+      return;
+  }
+  
+  // Crear PDF
+  const doc = new jsPDF();
+  
+  // Encabezado
+  doc.setFontSize(18);
+  doc.text(titulo, 14, 15);
+  doc.setFontSize(12);
+  doc.text(`Generado el: ${new Date().toLocaleDateString()}`, 14, 23);
+  doc.text(`Generado por: ${usuarioActual.nombre} (${usuarioActual.rol})`, 14, 30);
+  
+  // Tabla de productos
+  const headers = [["Producto", "Cantidad"]];
+  const data = productosFiltrados.map(p => [p.nombre, p.cantidad]);
+  
+  doc.autoTable({
+      startY: 40,
+      head: headers,
+      body: data,
+      theme: 'grid',
+      headStyles: {
+          fillColor: [41, 128, 185],
+          textColor: 255
+      },
+      styles: {
+          cellPadding: 3,
+          fontSize: 10
+      },
+      columnStyles: {
+          0: { cellWidth: 'auto' },
+          1: { cellWidth: 'auto' }
+      }
+  });
+  
+  // Pie de página
+  const pageCount = doc.internal.getNumberOfPages();
+  for(let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.text(`Página ${i} de ${pageCount}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 10);
+  }
+  
+  // Guardar PDF
+  doc.save(`reporte_inventario_${new Date().toISOString().slice(0,10)}.pdf`);
+  DOM.reporteModal.classList.add("hidden");
+});
+
+// Después de guardar/editar/eliminar productos
+async function registrarMovimiento(accion, producto) {
+  try {
+      await addDoc(collection(db, "movimientos"), {
+          usuario: usuarioActual.nombre,
+          fecha: new Date(),
+          accion: accion, // "crear", "actualizar", "eliminar"
+          producto: producto.nombre,
+          cantidad: producto.cantidad,
+          inventario: inventarioActual
+      });
+  } catch (error) {
+      console.error("Error registrando movimiento:", error);
+  }
+}
+
+// Luego llamar esta función en las operaciones CRUD:
+// Ejemplo en guardarProducto():
+await registrarMovimiento(productoActual ? "actualizar" : "crear", { nombre, cantidad });
 
 function cerrarSesion() {
   usuarioActual = null;
