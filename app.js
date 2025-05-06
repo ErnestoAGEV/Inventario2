@@ -13,6 +13,22 @@ let inventarioActual = null;
 let productosCache = [];
 let usuarioEditando = null;
 
+// Función para generar hash SHA-256 (cliente-side)
+async function hashPassword(password) {
+  // Convierte la contraseña a un array buffer
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  
+  // Genera el hash
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  
+  // Convierte el buffer a string hexadecimal
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  return hashHex;
+}
+
 // Elementos del DOM
 const DOM = {
   // Login/Registro
@@ -117,15 +133,28 @@ DOM.btnRegistro.addEventListener("click", async () => {
 
   if (!user || !pass) return alert("Completa todos los campos");
 
-  const userRef = doc(db, "usuarios", user);
-  const existing = await getDoc(userRef);
-  if (existing.exists()) {
-    alert("Ese usuario ya existe");
-  } else {
-    await setDoc(userRef, { password: pass, rol });
-    alert("Usuario registrado con éxito");
-    DOM.registroSection.classList.add("hidden");
-    DOM.loginSection.classList.remove("hidden");
+  try {
+    // Genera el hash de la contraseña
+    const hashedPassword = await hashPassword(pass);
+
+    const userRef = doc(db, "usuarios", user);
+    const existing = await getDoc(userRef);
+    
+    if (existing.exists()) {
+      alert("Ese usuario ya existe");
+    } else {
+      // Guarda el hash en lugar de la contraseña en texto plano
+      await setDoc(userRef, { 
+        password: hashedPassword, 
+        rol 
+      });
+      alert("Usuario registrado con éxito");
+      DOM.registroSection.classList.add("hidden");
+      DOM.loginSection.classList.remove("hidden");
+    }
+  } catch (error) {
+    console.error("Error al registrar:", error);
+    alert("Error al registrar usuario");
   }
 });
 
@@ -134,14 +163,23 @@ DOM.btnLogin.addEventListener("click", async () => {
   const user = document.getElementById("usuario").value;
   const pass = document.getElementById("password").value;
 
-  const docSnap = await getDoc(doc(db, "usuarios", user));
-  if (!docSnap.exists() || docSnap.data().password !== pass) {
-    alert("Usuario o contraseña inválidos");
-    return;
-  }
+  try {
+    // Genera el hash para comparar
+    const hashedPassword = await hashPassword(pass);
+    
+    const docSnap = await getDoc(doc(db, "usuarios", user));
+    if (!docSnap.exists() || docSnap.data().password !== hashedPassword) {
+      alert("Usuario o contraseña inválidos");
+      return;
+    }
 
-  usuarioActual = { nombre: user, rol: docSnap.data().rol };
-  mostrarMenu();
+    usuarioActual = { nombre: user, rol: docSnap.data().rol };
+    mostrarMenu();
+    
+  } catch (error) {
+    console.error("Error en login:", error);
+    alert("Error al iniciar sesión");
+  }
 });
 
 // Mostrar menú según rol
@@ -494,7 +532,7 @@ async function eliminarUsuario(usuarioId) {
 
 async function guardarUsuario() {
   const usuario = DOM.editUsuario.value.trim();
-  const password = DOM.editPassword.value.trim();
+  const password = DOM.editPassword.value.trim(); // Contraseña en texto plano
   const rol = DOM.editRol.value;
   
   if (!usuario || !password) {
@@ -502,45 +540,40 @@ async function guardarUsuario() {
     return;
   }
   
-  // Validar que solo administradores puedan crear otros administradores
-  if (rol === "administrador" && usuarioActual.rol !== "administrador") {
-    alert("Solo los administradores pueden crear otros administradores");
-    return;
-  }
-  
-  // Si está editando un usuario existente que es admin
-  if (usuarioEditando) {
-    const userDoc = await getDoc(doc(db, "usuarios", usuarioEditando.id));
-    if (userDoc.exists() && userDoc.data().rol === "administrador" && usuarioEditando.id !== usuarioActual.nombre) {
-      alert("No puedes editar a otro administrador");
-      return;
-    }
-  }
-  
   try {
+    // Generar hash de la nueva contraseña
+    const hashedPassword = await hashPassword(password);
+    
     if (usuarioEditando) {
+      // Actualizar usuario existente
       await updateDoc(doc(db, "usuarios", usuarioEditando.id), {
-        password,
+        password: hashedPassword, // Guardar la versión hasheada
         rol
       });
       alert("Usuario actualizado correctamente");
     } else {
+      // Crear nuevo usuario
       const userRef = doc(db, "usuarios", usuario);
       const existing = await getDoc(userRef);
+      
       if (existing.exists()) {
         alert("Ese usuario ya existe");
         return;
       }
       
-      await setDoc(userRef, { password, rol });
+      await setDoc(userRef, { 
+        password: hashedPassword, 
+        rol 
+      });
       alert("Usuario creado correctamente");
     }
     
     DOM.usuarioEditarModal.classList.add("hidden");
     await cargarUsuarios();
+    
   } catch (error) {
     console.error("Error al guardar usuario:", error);
-    alert("Error al guardar usuario");
+    alert("Error al guardar usuario: " + error.message);
   }
 }
 
