@@ -29,6 +29,8 @@ async function hashPassword(password) {
   return hashHex;
 }
 
+
+
 // Elementos del DOM
 const DOM = {
   // Login/Registro
@@ -125,6 +127,49 @@ DOM.btnCancelarEditarUsuario.addEventListener("click", () => {
 DOM.btnGuardarUsuario.addEventListener("click", guardarUsuario);
 DOM.buscarUsuario.addEventListener("input", filtrarUsuarios);
 
+// Función para validar contraseña (agrégala al inicio con las otras funciones)
+function validarPassword(password) {
+  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  return regex.test(password);
+}
+
+// Validación en tiempo real (agrégala después de tus event listeners)
+document.getElementById('regPassword').addEventListener('input', function(e) {
+  const password = e.target.value;
+  const feedbackDiv = document.getElementById('passwordFeedback');
+  const registerBtn = document.getElementById('btnRegistro');
+  
+  // Definir requisitos
+  const requirements = [
+      { regex: /.{8,}/, text: 'Mínimo 8 caracteres' },
+      { regex: /[A-Z]/, text: 'Al menos 1 mayúscula' },
+      { regex: /[a-z]/, text: 'Al menos 1 minúscula' },
+      { regex: /\d/, text: 'Al menos 1 número' },
+      { regex: /[@$!%*?&]/, text: 'Al menos 1 carácter especial (@$!%*?&)' }
+  ];
+  
+  // Verificar cada requisito
+  let allValid = true;
+  let feedbackHTML = '';
+  
+  requirements.forEach(req => {
+      const isValid = req.regex.test(password);
+      allValid = allValid && isValid;
+      feedbackHTML += `
+          <p class="${isValid ? 'text-green-500' : 'text-red-500'}">
+              ${isValid ? '✓' : '✗'} ${req.text}
+          </p>
+      `;
+  });
+  
+  // Actualizar UI
+  feedbackDiv.innerHTML = feedbackHTML;
+  e.target.classList.toggle('border-green-500', allValid && password.length > 0);
+  e.target.classList.toggle('border-red-500', !allValid && password.length > 0);
+  registerBtn.disabled = !allValid;
+});
+
+
 // Registro
 DOM.btnRegistro.addEventListener("click", async () => {
   const user = document.getElementById("regUsuario").value.trim();
@@ -132,6 +177,11 @@ DOM.btnRegistro.addEventListener("click", async () => {
   const rol = document.getElementById("regRol").value;
 
   if (!user || !pass) return alert("Completa todos los campos");
+
+  if (!validarPassword(pass)) {
+    alert("La contraseña debe contener:\n- 8+ caracteres\n- 1 mayúscula\n- 1 minúscula\n- 1 número\n- 1 carácter especial");
+    return;
+  }
 
   try {
     // Genera el hash de la contraseña
@@ -535,6 +585,11 @@ async function guardarUsuario() {
   const password = DOM.editPassword.value.trim(); // Contraseña en texto plano
   const rol = DOM.editRol.value;
   
+  if (password && !validarPassword(password)) { // Solo si se está cambiando la contraseña
+    alert("La nueva contraseña debe contener:\n- 8+ caracteres\n- 1 mayúscula\n- 1 minúscula\n- 1 número\n- 1 carácter especial");
+    return;
+  }
+
   if (!usuario || !password) {
     alert("Completa todos los campos");
     return;
