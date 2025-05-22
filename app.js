@@ -600,7 +600,7 @@ function editarUsuario(usuarioId, usuarioData) {
   DOM.usuarioModalTitle.textContent = "Editar Usuario";
   DOM.editUsuario.disabled = true;
   DOM.editUsuario.value = usuarioId;
-  DOM.editPassword.value = usuarioData.password;
+  DOM.editPassword.value = "";
   DOM.editRol.value = usuarioData.rol;
   DOM.usuarioEditarModal.classList.remove("hidden");
 }
@@ -775,18 +775,27 @@ DOM.btnDescargarReporte.addEventListener("click", async () => {
 
   // Encabezado
   doc.setFontSize(18);
-  doc.text(titulo, 14, 15);
+  function escapeText(text) {
+    return text.replace(/[&<>"']/g, function (m) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      }[m];
+    });
+  }
   doc.setFontSize(12);
-  doc.text(`Generado el: ${new Date().toLocaleDateString()}`, 14, 23);
-  doc.text(
-    `Generado por: ${usuarioActual.nombre} (${usuarioActual.rol})`,
-    14,
-    30
-  );
+  doc.text(escapeText(titulo), 14, 15);
+  doc.text(`Generado por: ${escapeText(usuarioActual.nombre)}`, 14, 30);
 
   // Tabla de productos
   const headers = [["Producto", "Cantidad"]];
-  const data = productosFiltrados.map((p) => [p.nombre, p.cantidad]);
+  const data = productosFiltrados.map((p) => [
+    escapeText(p.nombre),
+    p.cantidad,
+  ]);
 
   doc.autoTable({
     startY: 40,
