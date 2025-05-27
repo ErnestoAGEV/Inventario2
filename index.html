@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="es">
   <head>
@@ -9,200 +8,455 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+      
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      
+      .glass-effect {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      
+      .slide-in {
+        animation: slideIn 0.3s ease-out;
+      }
+      
+      .fade-in {
+        animation: fadeIn 0.4s ease-out;
+      }
+      
+      .scale-hover:hover {
+        transform: scale(1.02);
+        transition: transform 0.2s ease;
+      }
+      
+      .glow {
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+      }
+      
+      .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+      }
+      
+      .input-focus:focus {
+        transform: scale(1.01);
+        transition: transform 0.2s ease;
+      }
+      
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      
+      .floating {
+        animation: floating 3s ease-in-out infinite;
+      }
+      
+      @keyframes floating {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+      }
+      
+      .pulse-bg {
+        animation: pulse-bg 2s infinite;
+      }
+      
+      @keyframes pulse-bg {
+        0%, 100% { background-color: rgb(59, 130, 246); }
+        50% { background-color: rgb(37, 99, 235); }
+      }
+    </style>
   </head>
-  <body class="bg-gray-50">
-    <div class="container mx-auto px-2 py-8">
+  <body class="gradient-bg min-h-screen">
+    <!-- Decorative background elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute -top-40 -right-40 w-80 h-80 bg-white opacity-10 rounded-full blur-3xl"></div>
+      <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-white opacity-10 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 relative z-10">
       <!-- Login -->
-      <div id="login" class="max-w-sm mx-auto bg-white p-8 rounded-xl shadow border border-gray-100">
-        <h2 class="text-xl font-semibold mb-6 text-center text-gray-800">Iniciar Sesión</h2>
-        <div class="mb-4">
-          <label class="block text-gray-600 mb-1">Usuario</label>
-          <input id="usuario" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-200 transition"/>
+      <div id="login" class="max-w-md mx-auto glass-effect p-10 rounded-3xl shadow-2xl border border-white/20 fade-in">
+        <div class="text-center mb-8">
+          <div class="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 floating">
+            <i class="fas fa-boxes text-white text-2xl"></i>
+          </div>
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">Bienvenido</h2>
+          <p class="text-gray-600 text-sm">Accede a tu sistema de inventarios</p>
         </div>
-        <div class="mb-6">
-          <label class="block text-gray-600 mb-1">Contraseña</label>
-          <input id="password" type="password" class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-200 transition"/>
+        
+        <div class="space-y-5">
+          <div>
+            <label class="block text-gray-700 font-medium mb-2 text-sm">Usuario</label>
+            <div class="relative">
+              <input id="usuario" type="text" class="w-full px-4 py-3 pl-12 border border-gray-200 rounded-xl bg-white/70 focus:ring-2 focus:ring-blue-300 focus:border-transparent transition input-focus" placeholder="Ingresa tu usuario"/>
+              <i class="fas fa-user absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 font-medium mb-2 text-sm">Contraseña</label>
+            <div class="relative">
+              <input id="password" type="password" class="w-full px-4 py-3 pl-12 border border-gray-200 rounded-xl bg-white/70 focus:ring-2 focus:ring-blue-300 focus:border-transparent transition input-focus" placeholder="Ingresa tu contraseña"/>
+              <i class="fas fa-lock absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+          </div>
+          
+          <button id="btnLogin" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+            <i class="fas fa-sign-in-alt mr-2"></i>Ingresar
+          </button>
         </div>
-        <button id="btnLogin" class="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition">Ingresar</button>
-        <p class="text-center mt-4 text-sm text-gray-500">
-          ¿No tienes cuenta?
-          <button id="toggleRegistro" class="text-blue-600 hover:underline font-medium">Regístrate</button>
-        </p>
+        
+        <div class="text-center mt-8 pt-6 border-t border-gray-200">
+          <p class="text-gray-600 text-sm mb-3">¿No tienes cuenta?</p>
+          <button id="toggleRegistro" class="text-blue-600 hover:text-blue-800 font-semibold text-sm transition-colors">
+            Crear cuenta nueva <i class="fas fa-arrow-right ml-1"></i>
+          </button>
+        </div>
       </div>
 
       <!-- Registro -->
-      <div id="registro" class="max-w-sm mx-auto bg-white p-8 rounded-xl shadow border border-gray-100 hidden">
-        <h2 class="text-xl font-semibold mb-6 text-center text-gray-800">Registro</h2>
-        <div class="mb-4">
-          <label class="block text-gray-600 mb-1">Usuario</label>
-          <input id="regUsuario" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-200 transition"/>
+      <div id="registro" class="max-w-md mx-auto glass-effect p-10 rounded-3xl shadow-2xl border border-white/20 hidden fade-in">
+        <div class="text-center mb-8">
+          <div class="mx-auto w-16 h-16 bg-gradient-to-r from-green-500 to-teal-600 rounded-2xl flex items-center justify-center mb-4 floating">
+            <i class="fas fa-user-plus text-white text-2xl"></i>
+          </div>
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">Crear Cuenta</h2>
+          <p class="text-gray-600 text-sm">Regístrate para acceder al sistema</p>
         </div>
-        <div class="mb-4">
-          <label class="block text-gray-600 mb-1">Contraseña</label>
-          <input id="regPassword" type="password" class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-200 transition"/>
-          <small class="text-gray-400 block mt-1">8+ caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 especial (@$!%*?&)</small>
-          <div id="passwordFeedback" class="text-xs mt-1 space-y-1"></div>
+        
+        <div class="space-y-5">
+          <div>
+            <label class="block text-gray-700 font-medium mb-2 text-sm">Usuario</label>
+            <div class="relative">
+              <input id="regUsuario" type="text" class="w-full px-4 py-3 pl-12 border border-gray-200 rounded-xl bg-white/70 focus:ring-2 focus:ring-green-300 focus:border-transparent transition input-focus" placeholder="Elige un nombre de usuario"/>
+              <i class="fas fa-user absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 font-medium mb-2 text-sm">Contraseña</label>
+            <div class="relative">
+              <input id="regPassword" type="password" class="w-full px-4 py-3 pl-12 border border-gray-200 rounded-xl bg-white/70 focus:ring-2 focus:ring-green-300 focus:border-transparent transition input-focus" placeholder="Crea una contraseña segura"/>
+              <i class="fas fa-lock absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+            <div class="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <p class="text-xs text-blue-700 mb-2"><i class="fas fa-info-circle mr-1"></i>Requisitos de contraseña:</p>
+              <ul class="text-xs text-blue-600 space-y-1">
+                <li>• Mínimo 8 caracteres</li>
+                <li>• Al menos 1 mayúscula y 1 minúscula</li>
+                <li>• Al menos 1 número</li>
+                <li>• Al menos 1 carácter especial (@$!%*?&)</li>
+              </ul>
+            </div>
+            <div id="passwordFeedback" class="text-xs mt-2 space-y-1"></div>
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 font-medium mb-2 text-sm">Rol</label>
+            <div class="relative">
+              <select id="regRol" class="w-full px-4 py-3 pl-12 border border-gray-200 rounded-xl bg-white/70 focus:ring-2 focus:ring-green-300 focus:border-transparent transition input-focus appearance-none">
+                <option value="empleado">Empleado</option>
+                <option value="administrador">Administrador</option>
+              </select>
+              <i class="fas fa-user-tag absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <i class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+          </div>
+          
+          <button id="btnRegistro" class="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-xl font-semibold hover:from-green-700 hover:to-teal-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+            <i class="fas fa-user-plus mr-2"></i>Crear Cuenta
+          </button>
         </div>
-        <div class="mb-6">
-          <label class="block text-gray-600 mb-1">Rol</label>
-          <select id="regRol" class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-200 transition">
-            <option value="empleado">Empleado</option>
-            <option value="administrador">Administrador</option>
-          </select>
+        
+        <div class="text-center mt-8 pt-6 border-t border-gray-200">
+          <p class="text-gray-600 text-sm mb-3">¿Ya tienes cuenta?</p>
+          <button id="toggleLogin" class="text-blue-600 hover:text-blue-800 font-semibold text-sm transition-colors">
+            Iniciar sesión <i class="fas fa-arrow-right ml-1"></i>
+          </button>
         </div>
-        <button id="btnRegistro" class="w-full bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700 transition">Registrar</button>
-        <p class="text-center mt-4 text-sm text-gray-500">
-          ¿Ya tienes cuenta?
-          <button id="toggleLogin" class="text-blue-600 hover:underline font-medium">Inicia sesión</button>
-        </p>
       </div>
 
       <!-- Menú Principal -->
-      <div id="menu" class="hidden">
-        <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 mb-8 flex flex-col gap-6">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h1 id="bienvenida" class="text-2xl font-bold text-gray-800 tracking-tight"></h1>
-            <button id="btnLogout" class="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-lg border border-red-100 hover:bg-red-100 transition font-semibold shadow-sm">
-              <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+      <div id="menu" class="hidden fade-in">
+        <!-- Header -->
+        <div class="glass-effect p-8 rounded-3xl shadow-2xl border border-white/20 mb-8 card-hover">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <i class="fas fa-chart-line text-white text-lg"></i>
+              </div>
+              <div>
+                <h1 id="bienvenida" class="text-2xl font-bold text-gray-800"></h1>
+                <p class="text-gray-600 text-sm">Panel de control del inventario</p>
+              </div>
+            </div>
+            <button id="btnLogout" class="flex items-center gap-3 bg-gradient-to-r from-red-500 to-pink-600 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-pink-700 transition-all duration-300 font-semibold shadow-lg transform hover:scale-105">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Cerrar sesión</span>
             </button>
           </div>
-          <div id="acciones" class="flex flex-wrap gap-4 justify-center sm:justify-start">
-            <!-- Aquí se agregan los botones de acciones dinámicamente -->
+          
+          <div id="acciones" class="flex flex-wrap gap-4 justify-center lg:justify-start mt-8">
+            <!-- Botones de acciones se agregan dinámicamente -->
           </div>
         </div>
 
         <!-- Inventario -->
-        <div id="inventarioSection" class="hidden bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
-            <h2 class="text-xl font-semibold text-gray-800" id="inventarioTitle"></h2>
-            <div class="flex gap-2">
+        <div id="inventarioSection" class="hidden glass-effect p-8 rounded-3xl shadow-2xl border border-white/20 card-hover">
+          <div class="flex flex-col xl:flex-row xl:justify-between xl:items-center mb-8 gap-6">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-boxes text-white"></i>
+              </div>
+              <h2 class="text-2xl font-bold text-gray-800" id="inventarioTitle">Gestión de Inventario</h2>
+            </div>
+            
+            <div class="flex flex-wrap gap-3">
               <div class="relative">
-                <input type="text" id="buscarProducto" placeholder="Buscar producto..." class="py-2 px-4 pr-10 border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-200 transition text-sm"/>
-                <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <input type="text" id="buscarProducto" placeholder="Buscar producto..." class="py-3 px-4 pr-12 border border-gray-200 rounded-xl bg-white/70 focus:ring-2 focus:ring-blue-300 focus:border-transparent transition text-sm min-w-64 input-focus"/>
+                <div class="absolute right-4 top-1/2 transform -translate-y-1/2">
                   <i class="fas fa-search text-gray-400"></i>
                 </div>
               </div>
-              <button id="btnAgregarProducto" class="flex items-center gap-2 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition text-sm font-semibold shadow-sm">
-                <i class="fas fa-plus"></i> Agregar
+              <button id="btnAgregarProducto" class="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-6 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 text-sm font-semibold shadow-lg transform hover:scale-105">
+                <i class="fas fa-plus"></i>
+                <span>Agregar</span>
               </button>
-              <button id="btnGenerarReporte" class="flex items-center gap-2 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition text-sm font-semibold shadow-sm">
-                <i class="fas fa-file-pdf"></i> Reporte
+              <button id="btnGenerarReporte" class="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 text-sm font-semibold shadow-lg transform hover:scale-105">
+                <i class="fas fa-file-pdf"></i>
+                <span>Reporte</span>
               </button>
             </div>
           </div>
-          <div class="overflow-x-auto rounded-lg border border-gray-100">
-            <table class="min-w-full bg-white rounded-lg text-sm">
-              <thead>
-                <tr class="bg-gray-100 text-gray-700">
-                  <th class="py-3 px-4 border-b font-semibold">Producto</th>
-                  <th class="py-3 px-4 border-b font-semibold">Cantidad</th>
-                  <th class="py-3 px-4 border-b font-semibold">Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="tablaProductos"></tbody>
-            </table>
+          
+          <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-lg">
+            <div class="overflow-x-auto">
+              <table class="min-w-full bg-white">
+                <thead>
+                  <tr class="bg-gradient-to-r from-gray-50 to-gray-100">
+                    <th class="py-4 px-6 text-left font-semibold text-gray-700 border-b border-gray-200">
+                      <div class="flex items-center gap-2">
+                        <i class="fas fa-tag text-gray-500"></i>
+                        Producto
+                      </div>
+                    </th>
+                    <th class="py-4 px-6 text-left font-semibold text-gray-700 border-b border-gray-200">
+                      <div class="flex items-center gap-2">
+                        <i class="fas fa-cubes text-gray-500"></i>
+                        Cantidad
+                      </div>
+                    </th>
+                    <th class="py-4 px-6 text-center font-semibold text-gray-700 border-b border-gray-200">
+                      <div class="flex items-center justify-center gap-2">
+                        <i class="fas fa-cogs text-gray-500"></i>
+                        Acciones
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="tablaProductos" class="divide-y divide-gray-100">
+                  <!-- Productos se agregan dinámicamente -->
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Modal Producto -->
-    <div id="productoModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
-      <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md border border-gray-100">
-        <h3 class="text-lg font-semibold mb-4" id="modalTitle">Agregar Producto</h3>
-        <div class="mb-4">
-          <label class="block text-gray-600 mb-1">Nombre del Producto</label>
-          <input id="productoNombre" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-200 transition"/>
+    <div id="productoModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+      <div class="glass-effect p-8 rounded-3xl shadow-2xl w-full max-w-md border border-white/20 scale-hover">
+        <div class="text-center mb-6">
+          <div class="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4">
+            <i class="fas fa-box text-white text-2xl"></i>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-800" id="modalTitle">Agregar Producto</h3>
         </div>
-        <div class="mb-6">
-          <label class="block text-gray-600 mb-1">Cantidad</label>
-          <input id="productoCantidad" type="number" class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-200 transition"/>
+        
+        <div class="space-y-5">
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">Nombre del Producto</label>
+            <div class="relative">
+              <input id="productoNombre" type="text" class="w-full px-4 py-3 pl-12 border border-gray-200 rounded-xl bg-white/70 focus:ring-2 focus:ring-blue-300 focus:border-transparent transition input-focus" placeholder="Ingresa el nombre del producto"/>
+              <i class="fas fa-tag absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">Cantidad</label>
+            <div class="relative">
+              <input id="productoCantidad" type="number" min="0" class="w-full px-4 py-3 pl-12 border border-gray-200 rounded-xl bg-white/70 focus:ring-2 focus:ring-blue-300 focus:border-transparent transition input-focus" placeholder="Ingresa la cantidad"/>
+              <i class="fas fa-hashtag absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+          </div>
         </div>
-        <div class="flex justify-end gap-3">
-          <button id="btnCancelarModal" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition">Cancelar</button>
-          <button id="btnGuardarProducto" class="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">Guardar</button>
+        
+        <div class="flex gap-4 mt-8">
+          <button id="btnCancelarModal" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl hover:bg-gray-300 transition-all duration-300 font-semibold transform hover:scale-105">
+            Cancelar
+          </button>
+          <button id="btnGuardarProducto" class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold transform hover:scale-105">
+            Guardar
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Modal Usuarios -->
-    <div id="usuariosModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
-      <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl border border-gray-100">
-        <h3 class="text-lg font-semibold mb-4">Administración de Usuarios</h3>
-        <div class="mb-4">
-          <input type="text" id="buscarUsuario" placeholder="Buscar usuario..." class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 mb-4 focus:ring-2 focus:ring-blue-200 transition"/>
-          <div class="overflow-x-auto">
-            <table class="min-w-full bg-white rounded-lg">
-              <thead>
-                <tr class="bg-gray-100 text-gray-700">
-                  <th class="py-2 px-4 border-b">Usuario</th>
-                  <th class="py-2 px-4 border-b">Rol</th>
-                  <th class="py-2 px-4 border-b">Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="tablaUsuarios"></tbody>
-            </table>
+    <div id="usuariosModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+      <div class="glass-effect p-8 rounded-3xl shadow-2xl w-full max-w-4xl border border-white/20 max-h-[80vh] overflow-hidden">
+        <div class="text-center mb-6">
+          <div class="mx-auto w-16 h-16 bg-gradient-to-r from-green-500 to-teal-600 rounded-2xl flex items-center justify-center mb-4">
+            <i class="fas fa-users text-white text-2xl"></i>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-800">Administración de Usuarios</h3>
+        </div>
+        
+        <div class="mb-6">
+          <div class="relative">
+            <input type="text" id="buscarUsuario" placeholder="Buscar usuario..." class="w-full px-4 py-3 pl-12 border border-gray-200 rounded-xl bg-white/70 focus:ring-2 focus:ring-green-300 focus:border-transparent transition input-focus"/>
+            <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
           </div>
         </div>
-        <div class="flex justify-end gap-3">
-          <button id="btnCancelarUsuarios" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition">Cerrar</button>
-          <button id="btnNuevoUsuario" class="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition">+ Nuevo Usuario</button>
+        
+        <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-lg mb-6 max-h-96 overflow-y-auto">
+          <table class="min-w-full bg-white">
+            <thead class="sticky top-0">
+              <tr class="bg-gradient-to-r from-gray-50 to-gray-100">
+                <th class="py-4 px-6 text-left font-semibold text-gray-700 border-b border-gray-200">Usuario</th>
+                <th class="py-4 px-6 text-left font-semibold text-gray-700 border-b border-gray-200">Rol</th>
+                <th class="py-4 px-6 text-center font-semibold text-gray-700 border-b border-gray-200">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaUsuarios" class="divide-y divide-gray-100">
+              <!-- Usuarios se agregan dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="flex justify-between items-center">
+          <button id="btnCancelarUsuarios" class="bg-gray-200 text-gray-700 py-3 px-6 rounded-xl hover:bg-gray-300 transition-all duration-300 font-semibold transform hover:scale-105">
+            Cerrar
+          </button>
+          <button id="btnNuevoUsuario" class="bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 px-6 rounded-xl hover:from-green-700 hover:to-teal-700 transition-all duration-300 font-semibold transform hover:scale-105">
+            <i class="fas fa-plus mr-2"></i>Nuevo Usuario
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Modal Editar Usuario -->
-    <div id="usuarioEditarModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
-      <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md border border-gray-100">
-        <h3 class="text-lg font-semibold mb-4" id="usuarioModalTitle">Editar Usuario</h3>
-        <div class="mb-4">
-          <label class="block text-gray-600 mb-1">Usuario</label>
-          <input id="editUsuario" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50" disabled/>
+    <div id="usuarioEditarModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+      <div class="glass-effect p-8 rounded-3xl shadow-2xl w-full max-w-md border border-white/20">
+        <div class="text-center mb-6">
+          <div class="mx-auto w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-2xl flex items-center justify-center mb-4">
+            <i class="fas fa-user-edit text-white text-2xl"></i>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-800" id="usuarioModalTitle">Editar Usuario</h3>
         </div>
-        <div class="mb-4">
-          <label class="block text-gray-600 mb-1">Contraseña</label>
-          <input id="editPassword" type="password" class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50"/>
+        
+        <div class="space-y-5">
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">Usuario</label>
+            <div class="relative">
+              <input id="editUsuario" type="text" class="w-full px-4 py-3 pl-12 border border-gray-200 rounded-xl bg-gray-100 cursor-not-allowed" disabled/>
+              <i class="fas fa-user absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">Nueva Contraseña</label>
+            <div class="relative">
+              <input id="editPassword" type="password" class="w-full px-4 py-3 pl-12 border border-gray-200 rounded-xl bg-white/70 focus:ring-2 focus:ring-yellow-300 focus:border-transparent transition input-focus" placeholder="Dejar vacío para mantener actual"/>
+              <i class="fas fa-lock absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">Rol</label>
+            <div class="relative">
+              <select id="editRol" class="w-full px-4 py-3 pl-12 border border-gray-200 rounded-xl bg-white/70 focus:ring-2 focus:ring-yellow-300 focus:border-transparent transition input-focus appearance-none">
+                <option value="empleado">Empleado</option>
+                <option value="administrador">Administrador</option>
+              </select>
+              <i class="fas fa-user-tag absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <i class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+          </div>
         </div>
-        <div class="mb-6">
-          <label class="block text-gray-600 mb-1">Rol</label>
-          <select id="editRol" class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50">
-            <option value="empleado">Empleado</option>
-            <option value="administrador">Administrador</option>
-          </select>
-        </div>
-        <div class="flex justify-end gap-3">
-          <button id="btnCancelarEditarUsuario" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition">Cancelar</button>
-          <button id="btnGuardarUsuario" class="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">Guardar</button>
+        
+        <div class="flex gap-4 mt-8">
+          <button id="btnCancelarEditarUsuario" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl hover:bg-gray-300 transition-all duration-300 font-semibold transform hover:scale-105">
+            Cancelar
+          </button>
+          <button id="btnGuardarUsuario" class="flex-1 bg-gradient-to-r from-yellow-600 to-orange-600 text-white py-3 rounded-xl hover:from-yellow-700 hover:to-orange-700 transition-all duration-300 font-semibold transform hover:scale-105">
+            Guardar
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Modal Reporte -->
-    <div id="reporteModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
-      <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-0 overflow-hidden border border-gray-100">
-        <div class="px-6 py-5 border-b border-gray-100 flex items-center">
-          <span class="text-lg font-semibold text-gray-800 flex-1">Generar Reporte PDF</span>
-          <button id="btnCancelarReporte" class="text-gray-400 hover:text-gray-700 transition-colors text-xl px-2 py-1 rounded focus:outline-none">
+    <div id="reporteModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+      <div class="glass-effect rounded-3xl shadow-2xl w-full max-w-md border border-white/20 overflow-hidden">
+        <div class="px-8 py-6 border-b border-gray-200/50 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
+              <i class="fas fa-file-pdf text-white"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800">Generar Reporte</h3>
+          </div>
+          <button id="btnCancelarReporte" class="text-gray-400 hover:text-gray-700 transition-colors text-xl p-2 rounded-lg hover:bg-gray-100">
             <i class="fas fa-times"></i>
           </button>
         </div>
-        <form class="px-6 py-6 space-y-6">
+        
+        <div class="px-8 py-6 space-y-6">
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Tipo de Reporte</label>
-            <select id="tipoReporte" class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-200 focus:border-purple-400 transition">
-              <option value="inventario_completo">Inventario Completo</option>
-              <option value="productos_bajo_stock">Productos con Stock Bajo</option>
-            </select>
+            <label class="block text-gray-700 font-medium mb-3">Tipo de Reporte</label>
+            <div class="relative">
+              <select id="tipoReporte" class="w-full px-4 py-3 pl-12 border border-gray-200 rounded-xl bg-white/70 focus:ring-2 focus:ring-purple-300 focus:border-transparent transition input-focus appearance-none">
+                <option value="inventario_completo">📋 Inventario Completo</option>
+                <option value="productos_bajo_stock">⚠️ Productos con Stock Bajo</option>
+              </select>
+              <i class="fas fa-chart-bar absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <i class="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
           </div>
-          <div class="flex justify-end gap-2">
-            <button type="button" id="btnDescargarReporte" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition">
-              <i class="fas fa-download"></i> Descargar
-            </button>
-          </div>
-        </form>
+          
+          <button id="btnDescargarReporte" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-3 transition-all duration-300 transform hover:scale-105 shadow-lg">
+            <i class="fas fa-download"></i>
+            <span>Descargar PDF</span>
+          </button>
+        </div>
       </div>
     </div>
 
     <script type="module" src="app.js"></script>
-  </body>
-</html>
