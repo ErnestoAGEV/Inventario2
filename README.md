@@ -133,28 +133,3 @@ const firebaseConfig = {
 1. Desde cualquier inventario, clic en "Generar Reporte"
 2. Selecciona el tipo de reporte deseado
 3. El PDF se descarga automáticamente
-
-
-##  Estructura de Datos
-
-### Colección `usuarios`
-```javascript
-{
-  "nombreUsuario": {
-    password: "hash_sha256",
-    rol: "administrador" | "empleado",
-    failedAttempts: 0,  // Para protección contra fuerza bruta
-    lockUntil: 0        // Timestamp de bloqueo
-  }
-}
-```
-
-### Colección `inventarios/{userId}/productos`
-```javascript
-{
-  "productoId": {
-    nombre: "Nombre del producto",
-    cantidad: 100
-  }
-}
-```
