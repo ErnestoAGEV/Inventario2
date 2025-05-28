@@ -99,24 +99,39 @@ export function mostrarConfirmacionUI(mensaje, onConfirm) {
     modal.style.display = 'flex';
     modal.style.alignItems = 'center';
     modal.style.justifyContent = 'center';
-    modal.style.zIndex = 10000;
-    modal.innerHTML = `
+    modal.style.zIndex = 10000;    modal.innerHTML = `
       <div style="background:#fff;padding:32px 24px;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.18);max-width:90vw;min-width:260px;text-align:center;">
-        <div style="margin-bottom:18px;font-size:1.1rem;">${escapeHTML(mensaje)}</div>
+        <div id="mensajeConfirmacion" style="margin-bottom:18px;font-size:1.1rem;">${escapeHTML(mensaje)}</div>
         <button id="btnConfirmarUI" style="background:#2563eb;color:#fff;padding:8px 20px;border:none;border-radius:6px;font-weight:bold;margin-right:10px;">Aceptar</button>
         <button id="btnCancelarUI" style="background:#e5e7eb;color:#1e293b;padding:8px 20px;border:none;border-radius:6px;font-weight:bold;">Cancelar</button>
       </div>
     `;
     document.body.appendChild(modal);
   } else {
-    modal.querySelector('div').firstChild.textContent = mensaje;
-    modal.style.display = 'flex';
-  }
-  modal.querySelector('#btnConfirmarUI').onclick = () => {
+    // Actualizar el mensaje correctamente usando el ID específico
+    const mensajeDiv = modal.querySelector('#mensajeConfirmacion');
+    if (mensajeDiv) {
+      mensajeDiv.textContent = mensaje;
+    }
+    modal.style.display = 'flex';  }
+  
+  // Limpiar event listeners existentes y agregar nuevos
+  const btnConfirmar = modal.querySelector('#btnConfirmarUI');
+  const btnCancelar = modal.querySelector('#btnCancelarUI');
+  
+  // Clonar los botones para remover todos los event listeners existentes
+  const nuevoBtnConfirmar = btnConfirmar.cloneNode(true);
+  const nuevoBtnCancelar = btnCancelar.cloneNode(true);
+  
+  btnConfirmar.parentNode.replaceChild(nuevoBtnConfirmar, btnConfirmar);
+  btnCancelar.parentNode.replaceChild(nuevoBtnCancelar, btnCancelar);
+  
+  // Agregar los nuevos event listeners
+  nuevoBtnConfirmar.onclick = () => {
     modal.style.display = 'none';
     onConfirm();
   };
-  modal.querySelector('#btnCancelarUI').onclick = () => {
+  nuevoBtnCancelar.onclick = () => {
     modal.style.display = 'none';
   };
 }

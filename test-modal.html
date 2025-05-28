@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Modal Confirmación</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 10px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        .result {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 6px;
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Modal de Confirmación</h1>
+        <p>Este test verifica que el modal de confirmación se actualiza correctamente entre múltiples usos.</p>
+        
+        <button onclick="testModal('Producto A')">Eliminar Producto A</button>
+        <button onclick="testModal('Producto B')">Eliminar Producto B</button>
+        <button onclick="testModal('Usuario Test')">Eliminar Usuario Test</button>
+        
+        <div id="result" class="result" style="display: none;">
+            <strong>Resultado:</strong> <span id="result-text"></span>
+        </div>
+        
+        <h3>Instrucciones:</h3>
+        <ol>
+            <li>Haz clic en "Eliminar Producto A" y verifica que el modal muestra el nombre correcto</li>
+            <li>Cancela o confirma la acción</li>
+            <li>Haz clic en "Eliminar Producto B" y verifica que ahora muestra "Producto B" (no "Producto A")</li>
+            <li>Repite con diferentes productos para confirmar que no se superpone información</li>
+        </ol>
+    </div>
+
+    <script type="module">
+        import { mostrarConfirmacionUI } from './js/ui.js';
+        import { escapeHTML } from './js/utils.js';
+        
+        window.testModal = function(nombreItem) {
+            const resultado = document.getElementById('result');
+            const textoResultado = document.getElementById('result-text');
+            
+            mostrarConfirmacionUI(
+                `¿Estás seguro de eliminar "${escapeHTML(nombreItem)}"? Esta acción no se puede deshacer.`,
+                () => {
+                    textoResultado.textContent = `${nombreItem} fue eliminado correctamente`;
+                    resultado.style.display = 'block';
+                    resultado.style.background = '#dcfce7';
+                    resultado.style.borderColor = '#16a34a';
+                    
+                    setTimeout(() => {
+                        resultado.style.display = 'none';
+                    }, 3000);
+                }
+            );
+        };
+    </script>
+</body>
+</html>
