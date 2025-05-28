@@ -1178,19 +1178,15 @@ function mostrarMenu() {
 function generarBotonesAcciones() {
   DOM.acciones.innerHTML = '';
   
-  if (usuarioActual.rol === 'administrador') {
-    // Botones para administrador
+  if (usuarioActual.rol === 'administrador') {    // Botones para administrador
     DOM.acciones.innerHTML = `
       <button id="btnMiInventario" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-        <i class="fas fa-boxes"></i>
         <span>Mi Inventario</span>
       </button>
       <button id="btnVerInventarios" class="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
-        <i class="fas fa-users"></i>
         <span>Ver Inventarios</span>
       </button>
       <button id="btnAdministrarUsuarios" class="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium">
-        <i class="fas fa-user-cog"></i>
         <span>Administrar Usuarios</span>
       </button>
     `;
@@ -1207,12 +1203,10 @@ function generarBotonesAcciones() {
     document.getElementById('btnAdministrarUsuarios').addEventListener('click', () => {
       administrarUsuarios();
     });
-    
-  } else {
+      } else {
     // Botones para empleado
     DOM.acciones.innerHTML = `
       <button id="btnMiInventarioEmpleado" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-        <i class="fas fa-boxes"></i>
         <span>Mi Inventario</span>
       </button>
     `;
