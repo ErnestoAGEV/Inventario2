@@ -1,54 +1,53 @@
-// dom.js - Referencias a elementos del DOM
+// dom.js - Referencias dinámicas a elementos del DOM
 export const DOM = {
   // Login/Registro
-  loginSection: document.getElementById("login"),
-  registroSection: document.getElementById("registro"),
-  toggleRegistro: document.getElementById("toggleRegistro"),
-  toggleLogin: document.getElementById("toggleLogin"),
-  btnLogin: document.getElementById("btnLogin"),
-  btnRegistro: document.getElementById("btnRegistro"),
-  btnLogout: document.getElementById("btnLogout"),
+  get loginSection() { return document.getElementById("login"); },
+  get registroSection() { return document.getElementById("registro"); },
+  get toggleRegistro() { return document.getElementById("toggleRegistro"); },
+  get toggleLogin() { return document.getElementById("toggleLogin"); },
+  get btnLogin() { return document.getElementById("btnLogin"); },
+  get btnRegistro() { return document.getElementById("btnRegistro"); },
+  get btnLogout() { return document.getElementById("btnLogout"); },
 
   // Menú
-  menuSection: document.getElementById("menu"),
-  bienvenida: document.getElementById("bienvenida"),
-  acciones: document.getElementById("acciones"),
+  get menuSection() { return document.getElementById("menu"); },
+  get bienvenida() { return document.getElementById("bienvenida"); },
+  get acciones() { return document.getElementById("acciones"); },
 
   // Inventario
-  inventarioSection: document.getElementById("inventarioSection"),
-  inventarioTitle: document.getElementById("inventarioTitle"),
-  tablaProductos: document.getElementById("tablaProductos"),
-  btnAgregarProducto: document.getElementById("btnAgregarProducto"),
-  buscarProducto: document.getElementById("buscarProducto"),
-  btnGenerarReporte: document.getElementById("btnGenerarReporte"),
+  get inventarioSection() { return document.getElementById("inventarioSection"); },
+  get inventarioTitle() { return document.getElementById("inventarioTitle"); },
+  get tablaProductos() { return document.getElementById("tablaProductos"); },
+  get btnAgregarProducto() { return document.getElementById("btnAgregarProducto"); },
+  get buscarProducto() { return document.getElementById("buscarProducto"); },
+  get btnGenerarReporte() { return document.getElementById("btnGenerarReporte"); },
 
   // Modal Producto
-  productoModal: document.getElementById("productoModal"),
-  modalTitle: document.getElementById("modalTitle"),
-  productoNombre: document.getElementById("productoNombre"),
-  productoCantidad: document.getElementById("productoCantidad"),
-  btnCancelarModal: document.getElementById("btnCancelarModal"),
-  btnGuardarProducto: document.getElementById("btnGuardarProducto"),
-
+  get productoModal() { return document.getElementById("productoModal"); },
+  get modalTitle() { return document.getElementById("modalTitle"); },
+  get productoNombre() { return document.getElementById("productoNombre"); },
+  get productoCantidad() { return document.getElementById("productoCantidad"); },
+  get btnCancelarModal() { return document.getElementById("btnCancelarModal"); },
+  get btnGuardarProducto() { return document.getElementById("btnGuardarProducto"); },
+  
   // Administración de Usuarios
-  usuariosModal: document.getElementById("usuariosModal"),
-  buscarUsuario: document.getElementById("buscarUsuario"),
-  tablaUsuarios: document.getElementById("tablaUsuarios"),
-  btnCancelarUsuarios: document.getElementById("btnCancelarUsuarios"),
-  btnNuevoUsuario: document.getElementById("btnNuevoUsuario"),
+  get usuariosModal() { return document.getElementById("usuariosModal"); },
+  get buscarUsuario() { return document.getElementById("buscarUsuario"); },
+  get tablaUsuarios() { return document.getElementById("tablaUsuarios"); },
+  get btnCancelarUsuarios() { return document.getElementById("btnCancelarUsuarios"); },
 
   // Editar Usuario
-  usuarioEditarModal: document.getElementById("usuarioEditarModal"),
-  usuarioModalTitle: document.getElementById("usuarioModalTitle"),
-  editUsuario: document.getElementById("editUsuario"),
-  editPassword: document.getElementById("editPassword"),
-  editRol: document.getElementById("editRol"),
-  btnCancelarEditarUsuario: document.getElementById("btnCancelarEditarUsuario"),
-  btnGuardarUsuario: document.getElementById("btnGuardarUsuario"),
+  get usuarioEditarModal() { return document.getElementById("usuarioEditarModal"); },
+  get usuarioModalTitle() { return document.getElementById("usuarioModalTitle"); },
+  get editUsuario() { return document.getElementById("editUsuario"); },
+  get editPassword() { return document.getElementById("editPassword"); },
+  get editRol() { return document.getElementById("editRol"); },
+  get btnCancelarEditarUsuario() { return document.getElementById("btnCancelarEditarUsuario"); },
+  get btnGuardarUsuario() { return document.getElementById("btnGuardarUsuario"); },
 
   // Reportes
-  reporteModal: document.getElementById("reporteModal"),
-  tipoReporte: document.getElementById("tipoReporte"),
-  btnCancelarReporte: document.getElementById("btnCancelarReporte"),
-  btnDescargarReporte: document.getElementById("btnDescargarReporte"),
+  get reporteModal() { return document.getElementById("reporteModal"); },
+  get tipoReporte() { return document.getElementById("tipoReporte"); },
+  get btnCancelarReporte() { return document.getElementById("btnCancelarReporte"); },
+  get btnDescargarReporte() { return document.getElementById("btnDescargarReporte"); },
 };

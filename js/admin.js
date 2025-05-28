@@ -31,21 +31,9 @@ export function configurarEventosAdmin() {
     DOM.usuariosModal.classList.add("hidden");
   });
 
-  DOM.btnNuevoUsuario.addEventListener("click", () => {
-    usuarioEditando = null;
-    DOM.usuarioModalTitle.textContent = "Nuevo Usuario";
-    DOM.editUsuario.disabled = false;
-    DOM.editUsuario.value = "";
-    DOM.editPassword.value = "";
-    DOM.editRol.value = "empleado";
-    DOM.usuarioEditarModal.classList.remove("hidden");
-  });
-
   DOM.btnCancelarEditarUsuario.addEventListener("click", () => {
     DOM.usuarioEditarModal.classList.add("hidden");
-  });
-
-  DOM.btnGuardarUsuario.addEventListener("click", guardarUsuario);
+  });  DOM.btnGuardarUsuario.addEventListener("click", guardarUsuario);
   DOM.buscarUsuario.addEventListener("input", filtrarUsuarios);
 }
 
@@ -71,8 +59,17 @@ export async function cargarUsuarios() {
     DOM.tablaUsuarios.appendChild(row);
     return;
   }
+  
+  let usuariosVisibles = 0;
   snapshot.forEach((docu) => {
     const usuario = docu.data();
+    
+    // FILTRO DE SEGURIDAD: Ocultar administradores (excepto el usuario actual)
+    if (usuario.rol === "administrador" && docu.id !== getUsuarioActual().nombre) {
+      return; // Saltar este usuario
+    }
+    
+    usuariosVisibles++;
     const row = document.createElement("tr");
     row.className = "hover:bg-gray-50";
     row.innerHTML = `
@@ -91,6 +88,13 @@ export async function cargarUsuarios() {
     row.querySelector(".editar-usuario-btn").addEventListener("click", () => editarUsuario(docu.id, usuario));
     row.querySelector(".eliminar-usuario-btn").addEventListener("click", () => confirmarEliminarUsuario(docu.id));
   });
+  
+  // Si no hay usuarios visibles después del filtro
+  if (usuariosVisibles === 0) {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td colspan="3" class="py-4 text-center text-gray-500">No hay usuarios disponibles para administrar</td>`;
+    DOM.tablaUsuarios.appendChild(row);
+  }
 }
 
 export function filtrarUsuarios() {
@@ -119,7 +123,19 @@ export function editarUsuario(usuarioId, usuarioData) {
   DOM.usuarioModalTitle.textContent = "Editar Usuario";
   DOM.editUsuario.disabled = true;
   DOM.editUsuario.value = usuarioId;
-  DOM.editPassword.value = "";
+  
+  // Ocultar completamente el campo de contraseña - los admins no tienen acceso a contraseñas
+  const passwordContainer = DOM.editPassword.closest('div');
+  if (passwordContainer) {
+    passwordContainer.style.display = 'none';
+  }
+  
+  // Ocultar completamente el botón de reseteo - los admins no manejan contraseñas
+  const resetContainer = document.getElementById('resetPasswordContainer');
+  if (resetContainer) {
+    resetContainer.classList.add('hidden');
+  }
+  
   DOM.editRol.value = usuarioData.rol;
   DOM.usuarioEditarModal.classList.remove("hidden");
 }
@@ -170,39 +186,25 @@ export async function eliminarUsuario(usuarioId) {
 export async function guardarUsuario() {
   await precaucionOperacion();
   const usuario = DOM.editUsuario.value.trim();
-  const password = DOM.editPassword.value.trim();
   const rol = DOM.editRol.value;
-  if (password && !validarPassword(password)) {
-    mostrarMensajeUI(
-      "La nueva contraseña debe contener:\n- 8+ caracteres\n- 1 mayúscula\n- 1 minúscula\n- 1 número\n- 1 carácter especial",
-      'error'
-    );
+  
+  if (!usuario) {
+    mostrarMensajeUI("El nombre de usuario es obligatorio", 'error');
     return;
   }
-  if (!usuario || !password) {
-    mostrarMensajeUI("Completa todos los campos", 'error');
-    return;
-  }
+  
   try {
-    const hashedPassword = await hashPassword(password);
     if (usuarioEditando) {
+      // Editar usuario existente - solo actualizar rol (los administradores NO manejan contraseñas)
       await updateDoc(doc(db, "usuarios", usuarioEditando.id), {
-        password: hashedPassword,
         rol,
       });
       mostrarMensajeUI("Usuario actualizado correctamente", 'success');
     } else {
-      const userRef = doc(db, "usuarios", usuario);
-      const existing = await getDoc(userRef);
-      if (existing.exists()) {
-        mostrarMensajeUI("Ese usuario ya existe", 'error');
-        return;
-      }
-      await setDoc(userRef, {
-        password: hashedPassword,
-        rol,
-      });
-      mostrarMensajeUI("Usuario creado correctamente", 'success');
+      // Los administradores NO pueden crear usuarios nuevos ya que no manejan contraseñas
+      // La creación de usuarios debe hacerse a través de un proceso separado
+      mostrarMensajeUI("Los administradores no pueden crear usuarios nuevos. Los usuarios deben ser creados por el sistema.", 'error');
+      return;
     }
     DOM.usuarioEditarModal.classList.add("hidden");
     await cargarUsuarios();
@@ -223,7 +225,14 @@ export async function mostrarSeleccionUsuario() {
   let usuarios = [];
   
   usuariosSnap.forEach((docu) => {
-    usuarios.push({ id: docu.id, ...docu.data() });
+    const userData = docu.data();
+    
+    // FILTRO DE SEGURIDAD: Ocultar administradores (excepto el usuario actual)
+    if (userData.rol === "administrador" && docu.id !== getUsuarioActual().nombre) {
+      return; // Saltar este usuario
+    }
+    
+    usuarios.push({ id: docu.id, ...userData });
   });
 
   if (usuarios.length === 0) {
@@ -300,49 +309,4 @@ export async function mostrarSeleccionUsuario() {
       modal.style.display = 'none';
     }
   };
-}
-
-// FUNCIÓN TEMPORAL PARA PRUEBAS DE SCROLL - Puede eliminarse en producción
-export function cargarUsuariosPrueba() {
-  DOM.tablaUsuarios.innerHTML = "";
-  
-  // Crear 15 usuarios de prueba para verificar el scroll
-  for (let i = 1; i <= 15; i++) {
-    const row = document.createElement("tr");
-    row.className = "hover:bg-gray-50";
-    const rol = i % 4 === 0 ? 'administrador' : 'empleado';
-    row.innerHTML = `
-      <td class="py-3 px-6 border">${escapeHTML(`usuario${i.toString().padStart(2, '0')}`)}</td>
-      <td class="py-3 px-6 border">${escapeHTML(rol.toUpperCase())}</td>
-      <td class="py-3 px-6 border text-center">
-        <button class="editar-usuario-btn bg-yellow-500 text-white py-1 px-3 rounded mr-2 hover:bg-yellow-600" data-id="usuario${i.toString().padStart(2, '0')}">
-          Editar
-        </button>
-        <button class="eliminar-usuario-btn bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600" data-id="usuario${i.toString().padStart(2, '0')}">
-          Eliminar
-        </button>
-      </td>
-    `;
-    DOM.tablaUsuarios.appendChild(row);
-    
-    // Agregar event listeners
-    row.querySelector(".editar-usuario-btn").addEventListener("click", () => {
-      console.log(`Editar usuario${i.toString().padStart(2, '0')}`);
-    });
-    row.querySelector(".eliminar-usuario-btn").addEventListener("click", () => {
-      console.log(`Eliminar usuario${i.toString().padStart(2, '0')}`);
-    });
-  }
-}
-
-// Función para alternar entre datos reales y de prueba (útil para testing)
-export function toggleModoUsuarios(usarDatosPrueba = false) {
-  if (usarDatosPrueba) {
-    // Para testing del scroll - descomentar la siguiente línea si es necesario
-    // cargarUsuariosPrueba();
-    console.log("Modo de prueba activado para usuarios");
-  } else {
-    cargarUsuarios();
-    console.log("Cargando usuarios desde Firebase");
-  }
 }

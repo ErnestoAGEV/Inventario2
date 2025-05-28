@@ -122,12 +122,17 @@
           </div>
           <h2 class="text-2xl font-semibold text-gray-900 mb-2">Crear Cuenta</h2>
           <p class="text-gray-600 text-sm">Regístrate para acceder al sistema</p>
-        </div>
-        
-        <div class="space-y-4">
+        </div>          <div class="space-y-4">
           <div>
             <label class="block text-gray-700 font-medium mb-2 text-sm">Usuario</label>
-            <input id="regUsuario" type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gray-200 focus:border-gray-500 transition input-focus" placeholder="Elige un nombre de usuario"/>
+            <input id="regUsuario" type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gray-200 focus:border-gray-500 transition input-focus" placeholder="Elige un nombre de usuario (3-20 caracteres)"/>
+            <div id="usernameFeedback" class="text-xs mt-1"></div>
+          </div>
+
+          <div>
+            <label class="block text-gray-700 font-medium mb-2 text-sm">Email</label>
+            <input id="regEmail" type="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gray-200 focus:border-gray-500 transition input-focus" placeholder="tu.email@ejemplo.com" required/>
+            <div id="emailFeedback" class="text-xs mt-1"></div>
           </div>
           
           <div>
@@ -135,25 +140,23 @@
             <input id="regPassword" type="password" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gray-200 focus:border-gray-500 transition input-focus" placeholder="Crea una contraseña segura"/>
             <div class="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
               <p class="text-xs text-gray-700 mb-2">Requisitos de contraseña:</p>
-              <ul class="text-xs text-gray-600 space-y-1">
-                <li>• Mínimo 8 caracteres</li>
-                <li>• Al menos 1 mayúscula y 1 minúscula</li>
-                <li>• Al menos 1 número</li>
-                <li>• Al menos 1 carácter especial (@$!%*?&)</li>
+              <ul id="passwordRequirements" class="text-xs space-y-1">
+                <li id="req-length" class="text-red-500 transition-colors">• Mínimo 8 caracteres</li>
+                <li id="req-uppercase" class="text-red-500 transition-colors">• Al menos 1 mayúscula</li>
+                <li id="req-lowercase" class="text-red-500 transition-colors">• Al menos 1 minúscula</li>
+                <li id="req-number" class="text-red-500 transition-colors">• Al menos 1 número</li>
+                <li id="req-special" class="text-red-500 transition-colors">• Al menos 1 carácter especial (@$!%*?&)</li>
               </ul>
             </div>
-            <div id="passwordFeedback" class="text-xs mt-2 space-y-1"></div>
           </div>
-          
+
           <div>
-            <label class="block text-gray-700 font-medium mb-2 text-sm">Rol</label>
-            <select id="regRol" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gray-200 focus:border-gray-500 transition input-focus">
-              <option value="empleado">Empleado</option>
-              <option value="administrador">Administrador</option>
-            </select>
+            <label class="block text-gray-700 font-medium mb-2 text-sm">Confirmar contraseña</label>
+            <input id="regPasswordConfirm" type="password" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gray-200 focus:border-gray-500 transition input-focus" placeholder="Confirma tu contraseña"/>
+            <div id="passwordConfirmFeedback" class="text-xs mt-1"></div>
           </div>
           
-          <button id="btnRegistro" class="w-full bg-gray-900 text-white py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors">
+          <button id="btnRegistro" class="w-full bg-gray-900 text-white py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
             Crear Cuenta
           </button>
         </div>
@@ -319,15 +322,11 @@
             </div>
           </div>
         </div>
-        
-        <!-- Footer fijo con botones -->
+          <!-- Footer fijo con botones -->
         <div class="p-6 pt-4 border-t border-gray-200 bg-white/80 backdrop-blur-sm rounded-b-3xl">
-          <div class="flex justify-between items-center">
+          <div class="flex justify-center items-center">
             <button id="btnCancelarUsuarios" class="bg-gray-200 text-gray-700 py-3 px-6 rounded-xl hover:bg-gray-300 transition-all duration-300 font-semibold transform hover:scale-105">
               Cerrar
-            </button>
-            <button id="btnNuevoUsuario" class="bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 px-6 rounded-xl hover:from-green-700 hover:to-teal-700 transition-all duration-300 font-semibold transform hover:scale-105">
-              <i class="fas fa-plus mr-2"></i>Nuevo Usuario
             </button>
           </div>
         </div>
@@ -351,10 +350,7 @@
               <input id="editUsuario" type="text" class="w-full px-4 py-3 pl-12 border border-gray-200 rounded-xl bg-gray-100 cursor-not-allowed" disabled/>
               <i class="fas fa-user absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
             </div>
-          </div>
-          
-          <div>
-            <label class="block text-gray-700 font-medium mb-2">Nueva Contraseña</label>
+          </div>          <div>
             <div class="relative">
               <input id="editPassword" type="password" class="w-full px-4 py-3 pl-12 border border-gray-200 rounded-xl bg-white/70 focus:ring-2 focus:ring-yellow-300 focus:border-transparent transition input-focus" placeholder="Dejar vacío para mantener actual"/>
               <i class="fas fa-lock absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -418,8 +414,14 @@
             <span>Descargar PDF</span>
           </button>
         </div>
+      </div>    </div>
+
+    <!-- Modal Mi Perfil -->
+    <div id="perfilModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+      <div class="glass-effect rounded-3xl shadow-2xl w-full max-w-md border border-white/20 mx-4">
+        <!-- El contenido se genera dinámicamente desde profile.js -->
       </div>
     </div>
 
-
-    <script type="module" src="js/main.js"></script>
+    <!-- Script principal temporal para debugging -->
+    <script type="module" src="js/main-debug.js"></script>
