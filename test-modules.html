@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Module Test</title>
+</head>
+<body>
+    <h1>Testing Module Imports</h1>
+    <div id="test-output"></div>
+    
+    <script type="module">
+        async function testModules() {
+            const output = document.getElementById('test-output');
+            
+            try {
+                // Test Firebase config
+                const { db } = await import('./firebase-config.js');
+                output.innerHTML += '<p>✅ Firebase config loaded successfully</p>';
+                
+                // Test DOM module
+                const { DOM } = await import('./js/dom.js');
+                output.innerHTML += '<p>✅ DOM module loaded successfully</p>';
+                
+                // Test utilities
+                const utils = await import('./js/utils.js');
+                output.innerHTML += '<p>✅ Utils module loaded successfully</p>';
+                
+                // Test UI module
+                const ui = await import('./js/ui.js');
+                output.innerHTML += '<p>✅ UI module loaded successfully</p>';
+                
+                // Test auth module
+                const auth = await import('./js/auth.js');
+                output.innerHTML += '<p>✅ Auth module loaded successfully</p>';
+                
+                // Test inventory module
+                const inventory = await import('./js/inventory.js');
+                output.innerHTML += '<p>✅ Inventory module loaded successfully</p>';
+                
+                // Test admin module
+                const admin = await import('./js/admin.js');
+                output.innerHTML += '<p>✅ Admin module loaded successfully</p>';
+                
+                // Test reports module
+                const reports = await import('./js/reports.js');
+                output.innerHTML += '<p>✅ Reports module loaded successfully</p>';
+                
+                // Test security module
+                const security = await import('./js/security.js');
+                output.innerHTML += '<p>✅ Security module loaded successfully</p>';
+                
+                // Test main module
+                const main = await import('./js/main.js');
+                output.innerHTML += '<p>✅ Main module loaded successfully</p>';
+                
+                output.innerHTML += '<p><strong>🎉 All modules loaded successfully!</strong></p>';
+                
+            } catch (error) {
+                output.innerHTML += `<p style="color: red;">❌ Error loading modules: ${error.message}</p>`;
+                console.error('Module loading error:', error);
+            }
+        }
+        
+        testModules();
+    </script>
+</body>
+</html>
