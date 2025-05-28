@@ -39,6 +39,10 @@ async function hashPassword(password) {
   return hashHex;
 }
 
+// Inicialización cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("DOM cargado, inicializando aplicación...");
+
 // Elementos del DOM
 const DOM = {
   // Login/Registro
@@ -104,6 +108,9 @@ DOM.toggleLogin.addEventListener("click", () => {
   DOM.registroSection.classList.add("hidden");
   DOM.loginSection.classList.remove("hidden");
 });
+
+console.log("Conectando event listeners...");
+console.log("btnLogin element:", DOM.btnLogin);
 
 DOM.btnLogout.addEventListener("click", cerrarSesion);
 DOM.buscarProducto.addEventListener("input", filtrarProductos);
@@ -191,11 +198,15 @@ DOM.btnRegistro.addEventListener("click", async () => {
   const pass = document.getElementById("regPassword").value.trim();
   const rol = document.getElementById("regRol").value;
 
-  if (!user || !pass) return alert("Completa todos los campos");
+  if (!user || !pass) {
+    mostrarMensajeRegistro("Completa todos los campos", 'error');
+    return;
+  }
 
   if (!validarPassword(pass)) {
-    alert(
-      "La contraseña debe contener:\n- 8+ caracteres\n- 1 mayúscula\n- 1 minúscula\n- 1 número\n- 1 carácter especial"
+    mostrarMensajeRegistro(
+      "La contraseña debe contener:\n- 8+ caracteres\n- 1 mayúscula\n- 1 minúscula\n- 1 número\n- 1 carácter especial",
+      'error'
     );
     return;
   }
@@ -208,75 +219,203 @@ DOM.btnRegistro.addEventListener("click", async () => {
     const existing = await getDoc(userRef);
 
     if (existing.exists()) {
-      alert("Ese usuario ya existe");
+      mostrarMensajeRegistro("Ese usuario ya existe", 'error');
     } else {
       // Guarda el hash en lugar de la contraseña en texto plano
       await setDoc(userRef, {
         password: hashedPassword,
         rol,
       });
-      alert("Usuario registrado con éxito");
-      DOM.registroSection.classList.add("hidden");
-      DOM.loginSection.classList.remove("hidden");
+      mostrarMensajeRegistro("Usuario registrado con éxito", 'success');
+      // Iniciar sesión automáticamente tras registro
+      usuarioActual = { nombre: user, rol };
+      setTimeout(() => {
+        mostrarMenu();
+        mostrarMensajeRegistro('', 'info');
+      }, 1500);
     }
   } catch (error) {
     console.error("Error al registrar:", error);
-    alert("Error al registrar usuario");
+    mostrarMensajeRegistro("Error al registrar usuario", 'error');
   }
 });
 
-// Login
+// Login con protección contra fuerza bruta
 DOM.btnLogin.addEventListener("click", async () => {
-  const user = document.getElementById("usuario").value;
+  console.log("Botón de login presionado");
+  const user = document.getElementById("usuario").value.trim();
   const pass = document.getElementById("password").value;
+  console.log("Usuario:", user, "Password length:", pass.length);
 
   try {
-    // Genera el hash para comparar
-    const hashedPassword = await hashPassword(pass);
-
-    const docSnap = await getDoc(doc(db, "usuarios", user));
-    if (!docSnap.exists() || docSnap.data().password !== hashedPassword) {
-      alert("Usuario o contraseña inválidos");
+    const userRef = doc(db, "usuarios", user);
+    const docSnap = await getDoc(userRef);
+    if (!docSnap.exists()) {
+      mostrarMensajeLogin("Usuario o contraseña inválidos", 'error');
       return;
     }
 
-    usuarioActual = { nombre: user, rol: docSnap.data().rol };
+    // Protección contra fuerza bruta
+    const userData = docSnap.data();
+    const now = Date.now();
+    const failedAttempts = userData.failedAttempts || 0;
+    const lockUntil = userData.lockUntil || 0;
+    if (lockUntil && now < lockUntil) {
+      const segundos = Math.ceil((lockUntil - now) / 1000);
+      let mensaje;
+      if (segundos >= 60) {
+        const minutos = Math.floor(segundos / 60);
+        const restoSegundos = segundos % 60;
+        mensaje = `Cuenta bloqueada por intentos fallidos. Intenta de nuevo en ${minutos} minuto(s)${restoSegundos > 0 ? ` y ${restoSegundos} segundo(s)` : ''}.`;
+      } else {
+        mensaje = `Cuenta bloqueada por intentos fallidos. Intenta de nuevo en ${segundos} segundo(s).`;
+      }
+      mostrarMensajeLogin(mensaje, 'error');
+      return;
+    }
+
+    // Genera el hash para comparar
+    const hashedPassword = await hashPassword(pass);
+    if (userData.password !== hashedPassword) {
+      // Incrementar intentos fallidos
+      let newFailed = failedAttempts + 1;
+      let updateData = { failedAttempts: newFailed };
+      document.getElementById("password").value = "";
+      if (newFailed >= 5) {
+        updateData.lockUntil = now + 15 * 1000; // 15 segundos
+        mostrarMensajeLogin("Demasiados intentos fallidos. Cuenta bloqueada por 15 segundos.", 'error');
+      } else {
+        mostrarMensajeLogin("Usuario o contraseña inválidos", 'error');
+      }
+      await updateDoc(userRef, updateData);
+      return;
+    }
+
+    // Login exitoso: resetear contador
+    await updateDoc(userRef, { failedAttempts: 0, lockUntil: 0 });
+    usuarioActual = { nombre: user, rol: userData.rol };
     mostrarMenu();
   } catch (error) {
     console.error("Error en login:", error);
-    alert("Error al iniciar sesión");
+    mostrarMensajeLogin("Error al iniciar sesión", 'error');
   }
 });
 
-// Mostrar menú según rol
-function mostrarMenu() {
-  DOM.loginSection.classList.add("hidden");
-  DOM.registroSection.classList.add("hidden");
-  DOM.menuSection.classList.remove("hidden");
-  DOM.bienvenida.textContent = `Bienvenido ${
-    usuarioActual.nombre
-  } (${usuarioActual.rol.toUpperCase()})`;
-
-  DOM.acciones.innerHTML = "";
-
-  // Todos los usuarios pueden ver su inventario
-  agregarBoton("Ver mi inventario", () =>
-    mostrarInventario(usuarioActual.nombre)
-  );
-
-  // Solo administradores pueden ver estas opciones
-  if (usuarioActual.rol === "administrador") {
-    agregarBoton("Ver todos los inventarios", mostrarSeleccionUsuario);
-    agregarBoton("Administrar usuarios", administrarUsuarios);
+// Mostrar mensajes en el login
+function mostrarMensajeLogin(mensaje, tipo = 'info') {
+  let cont = document.getElementById('loginMensaje');
+  if (!cont) {
+    cont = document.createElement('div');
+    cont.id = 'loginMensaje';
+    cont.style.marginTop = '10px';
+    cont.style.textAlign = 'center';
+    DOM.loginSection.appendChild(cont);
   }
+  cont.textContent = mensaje;
+  cont.style.color = tipo === 'error' ? '#dc2626' : '#2563eb';
+  cont.style.fontWeight = 'bold';
 }
 
-function agregarBoton(texto, accion) {
-  const btn = document.createElement("button");
-  btn.textContent = texto;
-  btn.className = "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700";
-  btn.onclick = accion;
-  DOM.acciones.appendChild(btn);
+// Mostrar mensajes en el registro
+function mostrarMensajeRegistro(mensaje, tipo = 'info') {
+  let cont = document.getElementById('registroMensaje');
+  if (!cont) {
+    cont = document.createElement('div');
+    cont.id = 'registroMensaje';
+    cont.style.marginTop = '10px';
+    cont.style.textAlign = 'center';
+    DOM.registroSection.appendChild(cont);
+  }
+  cont.textContent = mensaje;
+  if (tipo === 'success') {
+    cont.style.color = '#16a34a';
+  } else if (tipo === 'error') {
+    cont.style.color = '#dc2626';
+  } else {
+    cont.style.color = '#2563eb';
+  }
+  cont.style.fontWeight = 'bold';
+}
+
+// --- Función para escapar texto y prevenir XSS ---
+function escapeHTML(text) {
+  if (typeof text !== 'string') return text;
+  return text.replace(/[&<>"']/g, function (m) {
+    return {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    }[m];
+  });
+}
+
+// Reemplazo de alert, confirm y prompt por mensajes/modales estilizados
+function mostrarMensajeUI(mensaje, tipo = 'info', contenedor = document.body) {
+  let cont = document.getElementById('mensajeUI');
+  if (!cont) {
+    cont = document.createElement('div');
+    cont.id = 'mensajeUI';
+    cont.style.position = 'fixed';
+    cont.style.top = '20px';
+    cont.style.left = '50%';
+    cont.style.transform = 'translateX(-50%)';
+    cont.style.zIndex = 9999;
+    cont.style.padding = '16px 32px';
+    cont.style.borderRadius = '8px';
+    cont.style.fontWeight = 'bold';
+    cont.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+    cont.style.fontSize = '1.1rem';
+    cont.style.maxWidth = '90vw';
+    cont.style.textAlign = 'center';
+    contenedor.appendChild(cont);
+  }
+  cont.textContent = mensaje;
+  cont.style.background = tipo === 'error' ? '#fee2e2' : tipo === 'success' ? '#dcfce7' : '#dbeafe';
+  cont.style.color = tipo === 'error' ? '#b91c1c' : tipo === 'success' ? '#166534' : '#1e40af';
+  cont.style.border = tipo === 'error' ? '2px solid #b91c1c' : tipo === 'success' ? '2px solid #166534' : '2px solid #1e40af';
+  cont.style.display = 'block';
+  setTimeout(() => {
+    cont.style.display = 'none';
+  }, 2500);
+}
+
+// Reemplazo de confirmación por modal estilizado
+function mostrarConfirmacionUI(mensaje, onConfirm) {
+  let modal = document.getElementById('modalConfirmacionUI');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modalConfirmacionUI';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+    modal.style.background = 'rgba(0,0,0,0.3)';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.zIndex = 10000;
+    modal.innerHTML = `
+      <div style="background:#fff;padding:32px 24px;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.18);max-width:90vw;min-width:260px;text-align:center;">
+        <div style="margin-bottom:18px;font-size:1.1rem;">${escapeHTML(mensaje)}</div>
+        <button id="btnConfirmarUI" style="background:#2563eb;color:#fff;padding:8px 20px;border:none;border-radius:6px;font-weight:bold;margin-right:10px;">Aceptar</button>
+        <button id="btnCancelarUI" style="background:#e5e7eb;color:#1e293b;padding:8px 20px;border:none;border-radius:6px;font-weight:bold;">Cancelar</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  } else {
+    modal.querySelector('div').firstChild.textContent = mensaje;
+    modal.style.display = 'flex';
+  }
+  modal.querySelector('#btnConfirmarUI').onclick = () => {
+    modal.style.display = 'none';
+    onConfirm();
+  };
+  modal.querySelector('#btnCancelarUI').onclick = () => {
+    modal.style.display = 'none';
+  };
 }
 
 // Funciones de inventario
@@ -334,25 +473,20 @@ function agregarFilaProducto(producto) {
   const row = document.createElement("tr");
   row.className = "hover:bg-gray-50";
   row.innerHTML = `
-    <td class="py-2 px-4 border">${producto.nombre}</td>
-    <td class="py-2 px-4 border">${producto.cantidad}</td>
+    <td class="py-2 px-4 border">${escapeHTML(producto.nombre)}</td>
+    <td class="py-2 px-4 border">${escapeHTML(String(producto.cantidad))}</td>
     <td class="py-2 px-4 border">
-      <button class="editar-btn bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600" data-id="${producto.id}">
+      <button class="editar-btn bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600" data-id="${escapeHTML(producto.id)}">
         Editar
       </button>
-      <button class="eliminar-btn bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600" data-id="${producto.id}">
+      <button class="eliminar-btn bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600" data-id="${escapeHTML(producto.id)}">
         Eliminar
       </button>
     </td>
   `;
   DOM.tablaProductos.appendChild(row);
-
-  row
-    .querySelector(".editar-btn")
-    .addEventListener("click", () => editarProducto(producto));
-  row
-    .querySelector(".eliminar-btn")
-    .addEventListener("click", () => confirmarEliminarProducto(producto));
+  row.querySelector(".editar-btn").addEventListener("click", () => editarProducto(producto));
+  row.querySelector(".eliminar-btn").addEventListener("click", () => confirmarEliminarProducto(producto));
 }
 
 function filtrarProductos() {
@@ -433,75 +567,56 @@ function confirmarEliminarProducto(producto) {
       return;
     }
 
-    if (
-      confirm(`¿Estás seguro de eliminar el producto "${producto.nombre}"?`)
-    ) {
-      eliminarProducto(producto.id);
-    }
+    mostrarConfirmacionUI(
+      `¿Estás seguro de eliminar el producto "${escapeHTML(producto.nombre)}"?`,
+      () => eliminarProducto(producto.id)
+    );
   });
 }
 
 // Funciones CRUD productos
 async function guardarProducto() {
+  await precaucionOperacion();
   const nombre = DOM.productoNombre.value.trim();
   const cantidad = parseInt(DOM.productoCantidad.value, 10);
-
-  if (!nombre || isNaN(cantidad)) {
-    alert("Por favor completa todos los campos correctamente");
+  if (!validarNombreProducto(nombre) || !validarCantidad(cantidad)) {
+    mostrarMensajeUI("Por favor completa todos los campos correctamente", 'error');
     return;
   }
-
   try {
     if (productoActual) {
       await updateDoc(
-        doc(
-          db,
-          "inventarios",
-          inventarioActual,
-          "productos",
-          productoActual.id
-        ),
-        {
-          nombre,
-          cantidad,
-        }
+        doc(db, "inventarios", inventarioActual, "productos", productoActual.id),
+        { nombre, cantidad }
       );
-
       const index = productosCache.findIndex((p) => p.id === productoActual.id);
       if (index !== -1) {
         productosCache[index] = { ...productosCache[index], nombre, cantidad };
       }
-
-      alert("Producto actualizado correctamente");
+      mostrarMensajeUI("Producto actualizado correctamente", 'success');
     } else {
       const docRef = await addDoc(
         collection(db, "inventarios", inventarioActual, "productos"),
-        {
-          nombre,
-          cantidad,
-        }
+        { nombre, cantidad }
       );
-
       productosCache.push({ id: docRef.id, nombre, cantidad });
-      alert("Producto agregado correctamente");
+      mostrarMensajeUI("Producto agregado correctamente", 'success');
     }
-
     DOM.tablaProductos.innerHTML = "";
     productosCache.forEach(agregarFilaProducto);
     ocultarModal();
     DOM.buscarProducto.value = "";
   } catch (error) {
     console.error("Error al guardar producto:", error);
-    alert("Error al guardar producto");
+    mostrarMensajeUI("Error al guardar producto", 'error');
   }
 }
 
 async function eliminarProducto(id) {
+  await precaucionOperacion();
   try {
     await deleteDoc(doc(db, "inventarios", inventarioActual, "productos", id));
-
     productosCache = productosCache.filter((p) => p.id !== id);
-
     DOM.tablaProductos.innerHTML = "";
     if (productosCache.length === 0) {
       const row = document.createElement("tr");
@@ -510,12 +625,11 @@ async function eliminarProducto(id) {
     } else {
       productosCache.forEach(agregarFilaProducto);
     }
-
-    alert("Producto eliminado correctamente");
+    mostrarMensajeUI("Producto eliminado correctamente", 'success');
     DOM.buscarProducto.value = "";
   } catch (error) {
     console.error("Error al eliminar producto:", error);
-    alert("Error al eliminar producto");
+    mostrarMensajeUI("Error al eliminar producto", 'error');
   }
 }
 
@@ -526,6 +640,7 @@ async function administrarUsuarios() {
     return;
   }
 
+  // Cargar usuarios desde Firebase
   await cargarUsuarios();
   DOM.usuariosModal.classList.remove("hidden");
 }
@@ -533,44 +648,32 @@ async function administrarUsuarios() {
 async function cargarUsuarios() {
   const usuariosRef = collection(db, "usuarios");
   const snapshot = await getDocs(usuariosRef);
-
   DOM.tablaUsuarios.innerHTML = "";
-
   if (snapshot.empty) {
     const row = document.createElement("tr");
     row.innerHTML = `<td colspan="3" class="py-4 text-center text-gray-500">No hay usuarios registrados</td>`;
     DOM.tablaUsuarios.appendChild(row);
     return;
   }
-
-  snapshot.forEach((doc) => {
-    const usuario = doc.data();
+  snapshot.forEach((docu) => {
+    const usuario = docu.data();
     const row = document.createElement("tr");
     row.className = "hover:bg-gray-50";
     row.innerHTML = `
-      <td class="py-2 px-4 border">${doc.id}</td>
-      <td class="py-2 px-4 border">${usuario.rol.toUpperCase()}</td>
+      <td class="py-2 px-4 border">${escapeHTML(docu.id)}</td>
+      <td class="py-2 px-4 border">${escapeHTML(usuario.rol.toUpperCase())}</td>
       <td class="py-2 px-4 border">
-        <button class="editar-usuario-btn bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600" data-id="${
-          doc.id
-        }">
+        <button class="editar-usuario-btn bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600" data-id="${escapeHTML(docu.id)}">
           Editar
         </button>
-        <button class="eliminar-usuario-btn bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600" data-id="${
-          doc.id
-        }">
+        <button class="eliminar-usuario-btn bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600" data-id="${escapeHTML(docu.id)}">
           Eliminar
         </button>
       </td>
     `;
     DOM.tablaUsuarios.appendChild(row);
-
-    row
-      .querySelector(".editar-usuario-btn")
-      .addEventListener("click", () => editarUsuario(doc.id, usuario));
-    row
-      .querySelector(".eliminar-usuario-btn")
-      .addEventListener("click", () => confirmarEliminarUsuario(doc.id));
+    row.querySelector(".editar-usuario-btn").addEventListener("click", () => editarUsuario(docu.id, usuario));
+    row.querySelector(".eliminar-usuario-btn").addEventListener("click", () => confirmarEliminarUsuario(docu.id));
   });
 }
 
@@ -623,121 +726,164 @@ function confirmarEliminarUsuario(usuarioId) {
         return;
       }
 
-      if (
-        confirm(
-          `¿Estás seguro de eliminar el usuario "${usuarioId}"? Esta acción no se puede deshacer.`
-        )
-      ) {
-        eliminarUsuario(usuarioId);
-      }
+      mostrarConfirmacionUI(
+        `¿Estás seguro de eliminar el usuario "${escapeHTML(usuarioId)}"? Esta acción no se puede deshacer.`,
+        () => eliminarUsuario(usuarioId)
+      );
     }
   });
 }
 
 async function eliminarUsuario(usuarioId) {
+  await precaucionOperacion();
   try {
     await deleteDoc(doc(db, "usuarios", usuarioId));
-
     const inventarioRef = doc(db, "inventarios", usuarioId);
     const inventarioSnap = await getDoc(inventarioRef);
     if (inventarioSnap.exists()) {
       await deleteDoc(inventarioRef);
     }
-
     await cargarUsuarios();
-    alert("Usuario eliminado correctamente");
+    mostrarMensajeUI("Usuario eliminado correctamente", 'success');
   } catch (error) {
     console.error("Error al eliminar usuario:", error);
-    alert("Error al eliminar usuario");
+    mostrarMensajeUI("Error al eliminar usuario", 'error');
   }
 }
 
 async function guardarUsuario() {
+  await precaucionOperacion();
   const usuario = DOM.editUsuario.value.trim();
-  const password = DOM.editPassword.value.trim(); // Contraseña en texto plano
+  const password = DOM.editPassword.value.trim();
   const rol = DOM.editRol.value;
-
   if (password && !validarPassword(password)) {
-    // Solo si se está cambiando la contraseña
-    alert(
-      "La nueva contraseña debe contener:\n- 8+ caracteres\n- 1 mayúscula\n- 1 minúscula\n- 1 número\n- 1 carácter especial"
+    mostrarMensajeUI(
+      "La nueva contraseña debe contener:\n- 8+ caracteres\n- 1 mayúscula\n- 1 minúscula\n- 1 número\n- 1 carácter especial",
+      'error'
     );
     return;
   }
-
   if (!usuario || !password) {
-    alert("Completa todos los campos");
+    mostrarMensajeUI("Completa todos los campos", 'error');
     return;
   }
-
   try {
-    // Generar hash de la nueva contraseña
     const hashedPassword = await hashPassword(password);
-
     if (usuarioEditando) {
-      // Actualizar usuario existente
       await updateDoc(doc(db, "usuarios", usuarioEditando.id), {
-        password: hashedPassword, // Guardar la versión hasheada
+        password: hashedPassword,
         rol,
       });
-      alert("Usuario actualizado correctamente");
+      mostrarMensajeUI("Usuario actualizado correctamente", 'success');
     } else {
-      // Crear nuevo usuario
       const userRef = doc(db, "usuarios", usuario);
       const existing = await getDoc(userRef);
-
       if (existing.exists()) {
-        alert("Ese usuario ya existe");
+        mostrarMensajeUI("Ese usuario ya existe", 'error');
         return;
       }
-
       await setDoc(userRef, {
         password: hashedPassword,
         rol,
       });
-      alert("Usuario creado correctamente");
+      mostrarMensajeUI("Usuario creado correctamente", 'success');
     }
-
     DOM.usuarioEditarModal.classList.add("hidden");
     await cargarUsuarios();
   } catch (error) {
     console.error("Error al guardar usuario:", error);
-    alert("Error al guardar usuario: " + error.message);
+    mostrarMensajeUI("Error al guardar usuario: " + error.message, 'error');
   }
 }
 
 async function mostrarSeleccionUsuario() {
+  if (usuarioActual.rol !== "administrador") {
+    mostrarMensajeUI("No tienes permisos para esta función", 'error');
+    return;
+  }
+
   const usuariosRef = collection(db, "usuarios");
   const usuariosSnap = await getDocs(usuariosRef);
-
   let usuarios = [];
-  usuariosSnap.forEach((doc) => {
-    // Solo incluir usuarios que no sean administradores
-    if (doc.data().rol !== "administrador") {
-      usuarios.push({ id: doc.id, ...doc.data() });
-    }
+  
+  usuariosSnap.forEach((docu) => {
+    usuarios.push({ id: docu.id, ...docu.data() });
   });
 
   if (usuarios.length === 0) {
-    alert("No hay usuarios disponibles para ver sus inventarios");
+    mostrarMensajeUI("No hay usuarios disponibles para ver sus inventarios", 'info');
     return;
   }
 
-  let mensaje = "Selecciona un usuario para ver su inventario:\n";
-  usuarios.forEach((user, index) => {
-    mensaje += `${index + 1}. ${user.id} (${user.rol})\n`;
+  // Crear modal de selección de usuarios
+  let modal = document.getElementById('modalSeleccionUsuario');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modalSeleccionUsuario';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+    modal.style.background = 'rgba(0,0,0,0.3)';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.zIndex = 10000;
+    document.body.appendChild(modal);
+  }
+
+  let usuariosHTML = '';
+  usuarios.forEach((user) => {
+    usuariosHTML += `
+      <div class="user-item flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer" data-user="${escapeHTML(user.id)}">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+            <i class="fas fa-user text-white text-sm"></i>
+          </div>
+          <div>
+            <div class="font-medium text-gray-900">${escapeHTML(user.id)}</div>
+            <div class="text-sm text-gray-600">${escapeHTML(user.rol.toUpperCase())}</div>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right text-gray-400"></i>
+      </div>
+    `;
   });
 
-  const seleccion = prompt(mensaje);
-  if (!seleccion) return;
+  modal.innerHTML = `
+    <div style="background:#fff;padding:24px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);max-width:500px;width:90vw;max-height:80vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="font-size:1.25rem;font-weight:600;color:#1f2937;margin:0;">Seleccionar Usuario</h3>
+        <button id="btnCerrarSeleccion" style="background:none;border:none;font-size:1.5rem;color:#6b7280;cursor:pointer;">&times;</button>
+      </div>
+      <div style="space-y:8px;">
+        ${usuariosHTML}
+      </div>
+    </div>
+  `;
 
-  const index = parseInt(seleccion) - 1;
-  if (isNaN(index) || index < 0 || index >= usuarios.length) {
-    alert("Selección inválida");
-    return;
-  }
+  modal.style.display = 'flex';
 
-  await mostrarInventario(usuarios[index].id);
+  // Event listeners para el modal
+  modal.querySelector('#btnCerrarSeleccion').onclick = () => {
+    modal.style.display = 'none';
+  };
+
+  // Event listeners para cada usuario
+  modal.querySelectorAll('.user-item').forEach(item => {
+    item.onclick = () => {
+      const userId = item.getAttribute('data-user');
+      modal.style.display = 'none';
+      mostrarInventario(userId);
+    };
+  });
+  // Cerrar modal al hacer click fuera
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+    }
+  };
 }
 
 DOM.btnDescargarReporte.addEventListener("click", async () => {
@@ -833,28 +979,164 @@ DOM.btnDescargarReporte.addEventListener("click", async () => {
   DOM.reporteModal.classList.add("hidden");
 });
 
-// Después de guardar/editar/eliminar productos
-async function registrarMovimiento(accion, producto) {
+// --- Medidas de precaución básicas contra abuso/DoS ---
+const OPERACION_LIMITE = 30; // Máximo de operaciones permitidas por minuto
+let operacionesRecientes = [];
+
+function registrarOperacion() {
+  const ahora = Date.now();
+  // Elimina operaciones de hace más de 1 minuto
+  operacionesRecientes = operacionesRecientes.filter(ts => ahora - ts < 60000);
+  operacionesRecientes.push(ahora);
+  if (operacionesRecientes.length > OPERACION_LIMITE) {
+    return false; // Límite superado
+  }
+  return true;
+}
+
+function precaucionOperacion() {
+  if (!registrarOperacion()) {
+    alert("Has realizado demasiadas operaciones en poco tiempo. Espera unos segundos antes de continuar.");
+    // Retraso artificial para frenar bots
+    return new Promise(res => setTimeout(res, 2000));
+  }
+  return Promise.resolve();
+}
+
+// Ejemplo de uso: antes de operaciones críticas
+async function guardarProducto() {
+  await precaucionOperacion();
+  const nombre = DOM.productoNombre.value.trim();
+  const cantidad = parseInt(DOM.productoCantidad.value, 10);
+
+  if (!nombre || isNaN(cantidad)) {
+    alert("Por favor completa todos los campos correctamente");
+    return;
+  }
+
   try {
-    await addDoc(collection(db, "movimientos"), {
-      usuario: usuarioActual.nombre,
-      fecha: new Date(),
-      accion: accion, // "crear", "actualizar", "eliminar"
-      producto: producto.nombre,
-      cantidad: producto.cantidad,
-      inventario: inventarioActual,
-    });
+    if (productoActual) {
+      await updateDoc(
+        doc(
+          db,
+          "inventarios",
+          inventarioActual,
+          "productos",
+          productoActual.id
+        ),
+        {
+          nombre,
+          cantidad,
+        }
+      );
+
+      const index = productosCache.findIndex((p) => p.id === productoActual.id);
+      if (index !== -1) {
+        productosCache[index] = { ...productosCache[index], nombre, cantidad };
+      }
+
+      alert("Producto actualizado correctamente");
+    } else {
+      const docRef = await addDoc(
+        collection(db, "inventarios", inventarioActual, "productos"),
+        {
+          nombre,
+          cantidad,
+        }
+      );
+
+      productosCache.push({ id: docRef.id, nombre, cantidad });
+      alert("Producto agregado correctamente");
+    }
+
+    DOM.tablaProductos.innerHTML = "";
+    productosCache.forEach(agregarFilaProducto);
+    ocultarModal();
+    DOM.buscarProducto.value = "";
   } catch (error) {
-    console.error("Error registrando movimiento:", error);
+    console.error("Error al guardar producto:", error);
+    alert("Error al guardar producto");
   }
 }
 
-// Luego llamar esta función en las operaciones CRUD:
-// Ejemplo en guardarProducto():
-await registrarMovimiento(productoActual ? "actualizar" : "crear", {
-  nombre,
-  cantidad,
-});
+async function eliminarProducto(id) {
+  await precaucionOperacion();
+  try {
+    await deleteDoc(doc(db, "inventarios", inventarioActual, "productos", id));
+
+    productosCache = productosCache.filter((p) => p.id !== id);
+
+    DOM.tablaProductos.innerHTML = "";
+    if (productosCache.length === 0) {
+      const row = document.createElement("tr");
+      row.innerHTML = `<td colspan="3" class="py-4 text-center text-gray-500">No hay productos en este inventario</td>`;
+      DOM.tablaProductos.appendChild(row);
+    } else {
+      productosCache.forEach(agregarFilaProducto);
+    }
+
+    alert("Producto eliminado correctamente");
+    DOM.buscarProducto.value = "";
+  } catch (error) {
+    console.error("Error al eliminar producto:", error);
+    alert("Error al eliminar producto");
+  }
+}
+
+async function guardarUsuario() {
+  await precaucionOperacion();
+  const usuario = DOM.editUsuario.value.trim();
+  const password = DOM.editPassword.value.trim(); // Contraseña en texto plano
+  const rol = DOM.editRol.value;
+
+  if (password && !validarPassword(password)) {
+    // Solo si se está cambiando la contraseña
+    alert(
+      "La nueva contraseña debe contener:\n- 8+ caracteres\n- 1 mayúscula\n- 1 minúscula\n- 1 número\n- 1 carácter especial"
+    );
+    return;
+  }
+
+  if (!usuario || !password) {
+    alert("Completa todos los campos");
+    return;
+  }
+
+  try {
+    // Generar hash de la nueva contraseña
+    const hashedPassword = await hashPassword(password);
+
+    if (usuarioEditando) {
+      // Actualizar usuario existente
+      await updateDoc(doc(db, "usuarios", usuarioEditando.id), {
+        password: hashedPassword, // Guardar la versión hasheada
+        rol,
+      });
+      alert("Usuario actualizado correctamente");
+    } else {
+      // Crear nuevo usuario
+      const userRef = doc(db, "usuarios", usuario);
+      const existing = await getDoc(userRef);
+
+      if (existing.exists()) {
+        alert("Ese usuario ya existe");
+        return;
+      }
+
+      await setDoc(userRef, {
+        password: hashedPassword,
+        rol,
+      });
+      alert("Usuario creado correctamente");
+    }
+
+    DOM.usuarioEditarModal.classList.add("hidden");
+    await cargarUsuarios();
+  } catch (error) {
+    console.error("Error al guardar usuario:", error);
+    alert("Error al guardar usuario: " + error.message);
+  }
+}
 
 function cerrarSesion() {
   usuarioActual = null;
@@ -867,6 +1149,79 @@ function cerrarSesion() {
 
   document.getElementById("usuario").value = "";
   document.getElementById("password").value = "";
+}
+
+// Mostrar el menú principal tras login o registro exitoso
+function mostrarMenu() {
+  // Oculta login y registro
+  DOM.loginSection.classList.add("hidden");
+  DOM.registroSection.classList.add("hidden");
+  // Muestra el menú principal
+  DOM.menuSection.classList.remove("hidden");
+  // Mensaje de bienvenida
+  if (usuarioActual) {
+    DOM.bienvenida.textContent = `Bienvenido, ${usuarioActual.nombre} (${usuarioActual.rol})`;
+  }
+  
+  // Generar botones de acciones según el rol
+  generarBotonesAcciones();
+  
+  // Muestra el inventario del usuario actual automáticamente (de forma asíncrona y segura)
+  if (usuarioActual && usuarioActual.nombre) {
+    setTimeout(() => {
+      mostrarInventario(usuarioActual.nombre);
+    }, 100);
+  }
+}
+
+// Generar botones de acciones según el rol del usuario
+function generarBotonesAcciones() {
+  DOM.acciones.innerHTML = '';
+  
+  if (usuarioActual.rol === 'administrador') {
+    // Botones para administrador
+    DOM.acciones.innerHTML = `
+      <button id="btnMiInventario" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+        <i class="fas fa-boxes"></i>
+        <span>Mi Inventario</span>
+      </button>
+      <button id="btnVerInventarios" class="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
+        <i class="fas fa-users"></i>
+        <span>Ver Inventarios</span>
+      </button>
+      <button id="btnAdministrarUsuarios" class="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium">
+        <i class="fas fa-user-cog"></i>
+        <span>Administrar Usuarios</span>
+      </button>
+    `;
+    
+    // Agregar event listeners
+    document.getElementById('btnMiInventario').addEventListener('click', () => {
+      mostrarInventario(usuarioActual.nombre);
+    });
+    
+    document.getElementById('btnVerInventarios').addEventListener('click', () => {
+      mostrarSeleccionUsuario();
+    });
+    
+    document.getElementById('btnAdministrarUsuarios').addEventListener('click', () => {
+      administrarUsuarios();
+    });
+    
+  } else {
+    // Botones para empleado
+    DOM.acciones.innerHTML = `
+      <button id="btnMiInventarioEmpleado" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+        <i class="fas fa-boxes"></i>
+        <span>Mi Inventario</span>
+      </button>
+    `;
+    
+    // Agregar event listener
+    document.getElementById('btnMiInventarioEmpleado').addEventListener('click', () => {
+      mostrarInventario(usuarioActual.nombre);
+    });
+  }
 }
 
 // Test de conexión con Firestore
@@ -882,3 +1237,53 @@ function cerrarSesion() {
     console.error("❌ Error al conectar con Firestore", e);
   }
 })();
+
+}); // Fin de DOMContentLoaded
+
+// --- NOTA: Refuerza las reglas de seguridad de Firestore para roles y operaciones críticas. El frontend no es suficiente barrera. ---
+
+// FUNCIÓN TEMPORAL PARA PRUEBAS DE SCROLL
+// FUNCIÓN TEMPORAL PARA PRUEBAS DE SCROLL - Puede eliminarse en producción
+function cargarUsuariosPrueba() {
+  DOM.tablaUsuarios.innerHTML = "";
+  
+  // Crear 15 usuarios de prueba para verificar el scroll
+  for (let i = 1; i <= 15; i++) {
+    const row = document.createElement("tr");
+    row.className = "hover:bg-gray-50";
+    const rol = i % 4 === 0 ? 'administrador' : 'empleado';
+    row.innerHTML = `
+      <td class="py-3 px-6 border">${escapeHTML(`usuario${i.toString().padStart(2, '0')}`)}</td>
+      <td class="py-3 px-6 border">${escapeHTML(rol.toUpperCase())}</td>
+      <td class="py-3 px-6 border text-center">
+        <button class="editar-usuario-btn bg-yellow-500 text-white py-1 px-3 rounded mr-2 hover:bg-yellow-600" data-id="usuario${i.toString().padStart(2, '0')}">
+          Editar
+        </button>
+        <button class="eliminar-usuario-btn bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600" data-id="usuario${i.toString().padStart(2, '0')}">
+          Eliminar
+        </button>
+      </td>
+    `;
+    DOM.tablaUsuarios.appendChild(row);
+    
+    // Agregar event listeners
+    row.querySelector(".editar-usuario-btn").addEventListener("click", () => {
+      console.log(`Editar usuario${i.toString().padStart(2, '0')}`);
+    });
+    row.querySelector(".eliminar-usuario-btn").addEventListener("click", () => {
+      console.log(`Eliminar usuario${i.toString().padStart(2, '0')}`);
+    });
+  }
+}
+
+// Función para alternar entre datos reales y de prueba (útil para testing)
+function toggleModoUsuarios(usarDatosPrueba = false) {
+  if (usarDatosPrueba) {
+    // Para testing del scroll - descomentar la siguiente línea si es necesario
+    // cargarUsuariosPrueba();
+    console.log("Modo de prueba activado para usuarios");
+  } else {
+    cargarUsuarios();
+    console.log("Cargando usuarios desde Firebase");
+  }
+}
