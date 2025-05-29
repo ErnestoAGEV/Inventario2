@@ -52,41 +52,63 @@ export async function administrarUsuarios() {
 export async function cargarUsuarios() {
   const usuariosRef = collection(db, "usuarios");
   const snapshot = await getDocs(usuariosRef);
+  const usuarioActualNombre = getUsuarioActual().nombre;
   DOM.tablaUsuarios.innerHTML = "";
+  
   if (snapshot.empty) {
     const row = document.createElement("tr");
     row.innerHTML = `<td colspan="3" class="py-4 text-center text-gray-500">No hay usuarios registrados</td>`;
     DOM.tablaUsuarios.appendChild(row);
     return;
   }
-  
-  let usuariosVisibles = 0;
+    let usuariosVisibles = 0;
   snapshot.forEach((docu) => {
     const usuario = docu.data();
+    const usuarioId = docu.id;
     
-    // FILTRO DE SEGURIDAD: Ocultar administradores (excepto el usuario actual)
-    if (usuario.rol === "administrador" && docu.id !== getUsuarioActual().nombre) {
-      return; // Saltar este usuario
+    // FILTRO: Completamente ocultar el usuario actual (no debe aparecer en la lista)
+    if (usuarioId === usuarioActualNombre) {
+      return; // Saltar el usuario actual por completo
+    }
+    
+    // FILTRO DE SEGURIDAD: Ocultar otros administradores
+    if (usuario.rol === "administrador") {
+      return; // Saltar otros administradores
     }
     
     usuariosVisibles++;
     const row = document.createElement("tr");
     row.className = "hover:bg-gray-50";
+    
+    // Solo mostrar botones de editar y eliminar (ya no hay usuario actual en la lista)
+    const accionesHTML = `
+      <button class="editar-usuario-btn bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600" data-id="${escapeHTML(usuarioId)}">
+         Editar
+       </button>
+       <button class="eliminar-usuario-btn bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600" data-id="${escapeHTML(usuarioId)}">
+         Eliminar
+       </button>`;
+    
     row.innerHTML = `
-      <td class="py-2 px-4 border">${escapeHTML(docu.id)}</td>
+      <td class="py-2 px-4 border">${escapeHTML(usuarioId)}</td>
       <td class="py-2 px-4 border">${escapeHTML(usuario.rol.toUpperCase())}</td>
       <td class="py-2 px-4 border">
-        <button class="editar-usuario-btn bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-600" data-id="${escapeHTML(docu.id)}">
-          Editar
-        </button>
-        <button class="eliminar-usuario-btn bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600" data-id="${escapeHTML(docu.id)}">
-          Eliminar
-        </button>
+        ${accionesHTML}
       </td>
     `;
+    
     DOM.tablaUsuarios.appendChild(row);
-    row.querySelector(".editar-usuario-btn").addEventListener("click", () => editarUsuario(docu.id, usuario));
-    row.querySelector(".eliminar-usuario-btn").addEventListener("click", () => confirmarEliminarUsuario(docu.id));
+    
+    // Agregar event listeners
+    const editarBtn = row.querySelector(".editar-usuario-btn");
+    const eliminarBtn = row.querySelector(".eliminar-usuario-btn");
+    
+    if (editarBtn) {
+      editarBtn.addEventListener("click", () => editarUsuario(usuarioId, usuario));
+    }
+    if (eliminarBtn) {
+      eliminarBtn.addEventListener("click", () => confirmarEliminarUsuario(usuarioId));
+    }
   });
   
   // Si no hay usuarios visibles después del filtro
@@ -110,12 +132,20 @@ export function filtrarUsuarios() {
 }
 
 export function editarUsuario(usuarioId, usuarioData) {
+  const usuarioActualNombre = getUsuarioActual().nombre;
+  
   // No permitir editar otros administradores
   if (
     usuarioData.rol === "administrador" &&
-    usuarioId !== getUsuarioActual().nombre
+    usuarioId !== usuarioActualNombre
   ) {
     alert("No puedes editar a otro administrador");
+    return;
+  }
+
+  // No permitir editar el propio usuario desde la administración
+  if (usuarioId === usuarioActualNombre) {
+    mostrarMensajeUI("No puedes editar tu propia cuenta desde aquí. Usa la opción 'Mi Perfil' del menú.", 'info');
     return;
   }
 
@@ -222,21 +252,27 @@ export async function mostrarSeleccionUsuario() {
 
   const usuariosRef = collection(db, "usuarios");
   const usuariosSnap = await getDocs(usuariosRef);
+  const usuarioActualNombre = getUsuarioActual().nombre;
   let usuarios = [];
   
   usuariosSnap.forEach((docu) => {
     const userData = docu.data();
+    const usuarioId = docu.id;
     
-    // FILTRO DE SEGURIDAD: Ocultar administradores (excepto el usuario actual)
-    if (userData.rol === "administrador" && docu.id !== getUsuarioActual().nombre) {
-      return; // Saltar este usuario
+    // FILTRO: Excluir el usuario actual y otros administradores
+    if (usuarioId === usuarioActualNombre) {
+      return; // Saltar el usuario actual - redundante con el inventario propio
     }
     
-    usuarios.push({ id: docu.id, ...userData });
+    if (userData.rol === "administrador") {
+      return; // Saltar otros administradores
+    }
+    
+    usuarios.push({ id: usuarioId, ...userData });
   });
 
   if (usuarios.length === 0) {
-    mostrarMensajeUI("No hay usuarios disponibles para ver sus inventarios", 'info');
+    mostrarMensajeUI("No hay otros usuarios disponibles para ver sus inventarios. Para ver tu inventario usa el botón 'Ver Inventario'.", 'info');
     return;
   }
 
